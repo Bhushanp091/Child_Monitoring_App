@@ -14,6 +14,7 @@ import com.example.child_monitoring_app.ui.presentation.appUsage.AppUsageScreen
 import com.example.child_monitoring_app.ui.presentation.appUsage.AppUsageViewModel
 import com.example.child_monitoring_app.ui.presentation.appUsage.CallHistoryScreen
 import com.example.child_monitoring_app.ui.presentation.dashBoard.DashBoardMainScreen
+import com.example.child_monitoring_app.ui.presentation.login.LoginScreen
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -33,35 +34,39 @@ fun Navigation(modifier: Modifier = Modifier) {
     val navController = rememberNavController()
     val appUsageViewModel: AppUsageViewModel = viewModel()
 
-   NavHost(
-       navController = navController,
-       startDestination = Screen.DashBoard.route
-   ) {
-       composable(Screen.Login.route) {
+    NavHost(
+        navController = navController,
+        startDestination = Screen.DashBoard.route
+    ) {
+        composable(Screen.Login.route) {
+            LoginScreen()
+        }
 
-       }
+        composable(Screen.DashBoard.route) {
+            DashBoardMainScreen(navController)
+        }
 
-       composable(Screen.DashBoard.route) {
-           DashBoardMainScreen(navController)
-       }
+        composable(Screen.AddChild.route) {
 
-       composable(Screen.AddChild.route) {
+        }
 
-       }
+        composable(Screen.AppUsage.route) {
+            val hasPermission = appUsageViewModel.hasPermission
+            if (hasPermission) {
+                AppUsageScreen(appUsageViewModel)
+            } else {
+                appUsageViewModel.requestPermission()
+            }
+        }
 
-       composable(Screen.AppUsage.route) {
-           AppUsageScreen(appUsageViewModel)
+        composable(Screen.CallHistory.route) {
+            CallHistoryScreen(appUsageViewModel)
+        }
 
-       }
+        composable("DashBoard") {
 
-       composable(Screen.CallHistory.route) {
-           CallHistoryScreen(appUsageViewModel)
-       }
-
-       composable("DashBoard") {
-
-       }
-   }
+        }
+    }
 
 
 }

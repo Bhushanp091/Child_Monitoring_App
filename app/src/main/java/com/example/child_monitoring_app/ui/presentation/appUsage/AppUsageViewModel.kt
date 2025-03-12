@@ -1,6 +1,7 @@
 package com.example.child_monitoring_app.ui.presentation.appUsage
 
 import android.Manifest
+import android.app.Application
 import android.content.Context
 import android.content.pm.PackageManager
 import android.provider.CallLog
@@ -9,8 +10,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.core.app.ActivityCompat
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.example.child_monitoring_app.ui.presentation.BaseViewModel
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -18,7 +22,7 @@ import java.util.Locale
 
 
 
-class AppUsageViewModel: BaseViewModel() {
+class AppUsageViewModel(application: Application) : AndroidViewModel(application) {
     var callLogs by mutableStateOf(listOf<CallLogModel>())
         private set
 
@@ -64,6 +68,62 @@ class AppUsageViewModel: BaseViewModel() {
         }
         callLogs = callLogList
     }
+
+
+
+
+    private val appUsageService = AppUsageService(application)
+
+    var appUsageData by mutableStateOf<List<AppUsageData>>(emptyList())
+        private set
+
+    var isLoading by mutableStateOf(false)
+        private set
+
+    var currentTimeFrame by mutableStateOf(TimeFrame.DAILY)
+        private set
+
+    var hasPermission by mutableStateOf(false)
+        private set
+
+    init {
+        checkPermission()
+    }
+
+    fun checkPermission() {
+        hasPermission = appUsageService.checkForPermission()
+        if (hasPermission) {
+            loadAppUsageData()
+        }
+    }
+
+    fun requestPermission() {
+        appUsageService.openUsageAccessSettings()
+    }
+
+    fun setTimeFrame(timeFrame: TimeFrame) {
+        currentTimeFrame = timeFrame
+        loadAppUsageData()
+    }
+
+    fun loadAppUsageData() {
+        viewModelScope.launch {
+            isLoading = true
+            appUsageData = appUsageService.getAppUsageData(currentTimeFrame)
+            isLoading = false
+        }
+    }
+
+    fun formatTime(timeInMillis: Long): String {
+        return appUsageService.formatTime(timeInMillis)
+    }
+
+    fun getTotalScreenTime(): String {
+        val totalTime = appUsageData.sumOf { it.usageTime }
+        return appUsageService.formatTime(totalTime)
+    }
+
+
 }
 
 

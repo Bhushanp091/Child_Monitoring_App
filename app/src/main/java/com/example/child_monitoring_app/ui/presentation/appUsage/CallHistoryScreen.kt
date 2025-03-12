@@ -24,6 +24,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.child_monitoring_app.R
+import com.example.child_monitoring_app.ui.presentation.component.TopBar
 import network.chaintech.sdpcomposemultiplatform.sdp
 import network.chaintech.sdpcomposemultiplatform.ssp
 
@@ -52,15 +53,16 @@ fun CallHistoryScreen(
         }
     }
 
-    Column(modifier = Modifier.fillMaxSize()) {
-        TopAppBar(
-            title = { Text("Call Log History") },
-            modifier = Modifier.background(MaterialTheme.colorScheme.primary)
-        )
 
-        LazyColumn(modifier = Modifier.padding(16.dp)) {
-            items(viewModel.callLogs) { callLog ->
-                Text(callLog.toString())
+    Scaffold (
+        topBar = { TopBar("Call Log History") },
+        modifier = Modifier.fillMaxSize()
+    ) { paddingValue ->
+        Column(modifier = Modifier.fillMaxSize().padding(paddingValue)) {
+            LazyColumn(modifier = Modifier.padding(16.dp)) {
+                items(viewModel.callLogs) { callLog ->
+                    Text(callLog.toString())
+                }
             }
         }
     }
