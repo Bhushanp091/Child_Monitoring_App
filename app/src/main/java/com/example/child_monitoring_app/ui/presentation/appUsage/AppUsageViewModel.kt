@@ -13,8 +13,11 @@ import androidx.core.app.ActivityCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.child_monitoring_app.ui.data.FirebaseAuthManager
 import com.example.child_monitoring_app.ui.presentation.BaseViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -23,8 +26,12 @@ import java.util.Locale
 
 
 class AppUsageViewModel(application: Application) : AndroidViewModel(application) {
+    private val firestoreManager = FirebaseAuthManager()
+
+
     var callLogs by mutableStateOf(listOf<CallLogModel>())
         private set
+
 
     fun fetchCallLogs(context: Context) {
         if (ActivityCompat.checkSelfPermission(context, Manifest.permission.READ_CALL_LOG)
@@ -121,6 +128,22 @@ class AppUsageViewModel(application: Application) : AndroidViewModel(application
     fun getTotalScreenTime(): String {
         val totalTime = appUsageData.sumOf { it.usageTime }
         return appUsageService.formatTime(totalTime)
+    }
+
+
+
+
+
+    suspend fun saveCallLogs(userId: String, callLogs: List<CallLogModel>): Result<String> {
+        return withContext(Dispatchers.IO) {
+            firestoreManager.saveCallLogs(userId, callLogs)
+        }
+    }
+
+    suspend fun getCallLogs(userId: String): Result<List<CallLogModel>> {
+        return withContext(Dispatchers.IO) {
+            firestoreManager.getCallLogs(userId)
+        }
     }
 
 

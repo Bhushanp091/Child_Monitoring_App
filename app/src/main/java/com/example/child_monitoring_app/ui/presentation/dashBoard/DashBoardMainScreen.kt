@@ -4,7 +4,11 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Button
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -21,6 +25,13 @@ fun DashBoardMainScreen(
 
     Scaffold (
         topBar = { TopBar("DashBoard") },
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = {navController.navigate(Screen.AddChild.route)}
+            ) {
+                Icon(Icons.Default.Add,"")
+            }
+        },
         modifier = Modifier.fillMaxSize()
     ) { paddingValues ->
         Column(
@@ -46,6 +57,15 @@ fun DashBoardMainScreen(
             ) {
                 Text("Navigate To AppUsage")
             }
+
+            Button(
+                onClick = {
+                    navController.navigate(Screen.ShowChildData.route)
+                }
+            ) {
+                Text("Navigate To Show Child Data")
+            }
+
         }
 
     }
