@@ -1,0 +1,76 @@
+package com.example.child_monitoring_app
+
+import android.os.Bundle
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import com.example.child_monitoring_app.ui.presentation.appUsage.AppUsageScreen
+import com.example.child_monitoring_app.ui.presentation.appUsage.AppUsageViewModel
+import com.example.child_monitoring_app.ui.presentation.appUsage.CallHistoryScreen
+import com.example.child_monitoring_app.ui.presentation.dashBoard.DashBoardMainScreen
+
+class MainActivity : ComponentActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
+        setContent {
+            Navigation()
+        }
+    }
+}
+
+
+@Composable
+fun Navigation(modifier: Modifier = Modifier) {
+
+
+    val navController = rememberNavController()
+    val appUsageViewModel: AppUsageViewModel = viewModel()
+
+   NavHost(
+       navController = navController,
+       startDestination = Screen.DashBoard.route
+   ) {
+       composable(Screen.Login.route) {
+
+       }
+
+       composable(Screen.DashBoard.route) {
+           DashBoardMainScreen(navController)
+       }
+
+       composable(Screen.AddChild.route) {
+
+       }
+
+       composable(Screen.AppUsage.route) {
+           AppUsageScreen(appUsageViewModel)
+
+       }
+
+       composable(Screen.CallHistory.route) {
+           CallHistoryScreen(appUsageViewModel)
+       }
+
+       composable("DashBoard") {
+
+       }
+   }
+
+
+}
+
+
+sealed class Screen(val route: String) {
+    object DashBoard : Screen("dash_board")
+    object CallHistory : Screen("call_history")
+    object AppUsage : Screen("app_usage")
+    object Login : Screen("login")
+    object AddChild : Screen("add_Child")
+}
