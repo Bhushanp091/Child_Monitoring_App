@@ -36,11 +36,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.graphics.drawable.toBitmap
+import com.example.child_monitoring_app.R
+import com.example.child_monitoring_app.ui.CommonUtil.formatMillisToTime
 import com.example.child_monitoring_app.ui.presentation.component.TopBar
+import com.example.child_monitoring_app.ui.presentation.dashBoard.CommonToolbar
+import com.google.accompanist.drawablepainter.rememberDrawablePainter
 import network.chaintech.sdpcomposemultiplatform.sdp
 
 @Composable
-fun AppUsageScreen(viewModel: AppUsageViewModel) {
+fun AppUsageScreen(appUsageViewModel: AppUsageViewModel) {
 
     val context = LocalContext.current
     var usageData by remember { mutableStateOf<List<AppUsageInfo>>(emptyList()) }

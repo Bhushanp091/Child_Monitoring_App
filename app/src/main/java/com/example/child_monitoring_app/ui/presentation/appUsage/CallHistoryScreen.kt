@@ -25,48 +25,113 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.child_monitoring_app.R
 import com.example.child_monitoring_app.ui.presentation.component.TopBar
+import com.example.child_monitoring_app.ui.presentation.dashBoard.CommonToolbar
 import network.chaintech.sdpcomposemultiplatform.sdp
 import network.chaintech.sdpcomposemultiplatform.ssp
 
-@OptIn(ExperimentalMaterial3Api::class)
+
 @Composable
-fun CallHistoryScreen(
-    viewModel: AppUsageViewModel,
-    modifier: Modifier = Modifier
+fun CallLogHistoryScreen(
+    appUsageViewModel: AppUsageViewModel,
+    onBackClick:()->Unit
 ) {
+
     val context = LocalContext.current
+
+
     val permissionLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission()
-    ) { isGranted ->
-        if (isGranted) {
-            viewModel.fetchCallLogs(context)
+        contract = ActivityResultContracts.RequestPermission(),
+        onResult = { isGranted ->
+            appUsageViewModel.hasPermissionMain.value= isGranted
+            if (isGranted) {
+                appUsageViewModel.callLogsMain.value = appUsageViewModel.getCallLogs(context)
+            }
         }
-    }
+    )
 
     LaunchedEffect(Unit) {
-        if (ActivityCompat.checkSelfPermission(context, Manifest.permission.READ_CALL_LOG)
-            == PackageManager.PERMISSION_GRANTED
-        ) {
-            viewModel.fetchCallLogs(context)
-        } else {
-            permissionLauncher.launch(Manifest.permission.READ_CALL_LOG)
+        if (context.checkSelfPermission(Manifest.permission.READ_CALL_LOG) == PackageManager.PERMISSION_GRANTED) {
+            appUsageViewModel.hasPermissionMain.value = true
+            appUsageViewModel.callLogsMain.value = appUsageViewModel.getCallLogs(context)
         }
     }
 
 
-    Scaffold (
-        topBar = { TopBar("Call Log History") },
-        modifier = Modifier.fillMaxSize()
-    ) { paddingValue ->
-        Column(modifier = Modifier.fillMaxSize().padding(paddingValue)) {
-            LazyColumn(modifier = Modifier.padding(16.dp)) {
-                items(viewModel.callLogs) { callLog ->
-                    Text(callLog.toString())
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        CommonToolbar(
+            title = "CallLog History",
+            onBackClick = onBackClick
+        )
+
+        if (! appUsageViewModel.hasPermissionMain.value) {
+            Button(
+                onClick = {
+                    permissionLauncher.launch(Manifest.permission.READ_CALL_LOG)
+                }
+            ) {
+                Text(
+                    text = "Enable Permission"
+                )
+            }
+
+        } else {
+            LazyColumn(
+                modifier = Modifier
+            ) {
+                items( appUsageViewModel.callLogsMain.value) {
+                    CallLogHistoryInfoBox(it)
                 }
             }
         }
     }
 }
+
+
+
+@OptIn(ExperimentalMaterial3Api::class)
+//@Composable
+//fun CallHistoryScreen(
+//    viewModel: AppUsageViewModel,
+//    modifier: Modifier = Modifier
+//) {
+//    val context = LocalContext.current
+//    val permissionLauncher = rememberLauncherForActivityResult(
+//        contract = ActivityResultContracts.RequestPermission()
+//    ) { isGranted ->
+//        if (isGranted) {
+//            viewModel.fetchCallLogs(context)
+//        }
+//    }
+//
+//    LaunchedEffect(Unit) {
+//        if (ActivityCompat.checkSelfPermission(context, Manifest.permission.READ_CALL_LOG)
+//            == PackageManager.PERMISSION_GRANTED
+//        ) {
+//            viewModel.fetchCallLogs(context)
+//        } else {
+//            permissionLauncher.launch(Manifest.permission.READ_CALL_LOG)
+//        }
+//    }
+//
+//
+//    Scaffold (
+//        topBar = { TopBar("Call Log History") },
+//        modifier = Modifier.fillMaxSize()
+//    ) { paddingValue ->
+//        Column(modifier = Modifier.fillMaxSize().padding(paddingValue)) {
+//            LazyColumn(modifier = Modifier.padding(16.dp)) {
+//                items(viewModel.callLogs) { callLog ->
+//                    Text(callLog.toString())
+//                }
+//            }
+//        }
+//    }
+//}
+
 
 @Composable
 fun CallLogHistoryInfoBox(callLogModel: CallLogModel) {

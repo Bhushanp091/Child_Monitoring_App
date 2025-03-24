@@ -13,7 +13,7 @@ import androidx.navigation.compose.rememberNavController
 import com.example.child_monitoring_app.ui.presentation.addChild.AddChildScreen
 import com.example.child_monitoring_app.ui.presentation.appUsage.AppUsageScreen
 import com.example.child_monitoring_app.ui.presentation.appUsage.AppUsageViewModel
-import com.example.child_monitoring_app.ui.presentation.appUsage.CallHistoryScreen
+import com.example.child_monitoring_app.ui.presentation.appUsage.CallLogHistoryScreen
 import com.example.child_monitoring_app.ui.presentation.dashBoard.DashBoardMainScreen
 import com.example.child_monitoring_app.ui.presentation.dashBoard.GetUserScreen
 import com.example.child_monitoring_app.ui.presentation.login.AuthViewModel
@@ -80,7 +80,7 @@ fun Navigation() {
         }
 
         composable(Screen.CallHistory.route) {
-            CallHistoryScreen(appUsageViewModel)
+            CallLogHistoryScreen(appUsageViewModel){}
         }
 
         composable(Screen.ShowChildData.route) {

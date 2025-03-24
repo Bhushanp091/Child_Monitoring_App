@@ -65,5 +65,7 @@ dependencies {
 
     implementation("network.chaintech:sdp-ssp-compose-multiplatform:1.0.5")
     implementation ("androidx.navigation:navigation-compose:2.8.8")
+    implementation ("com.google.accompanist:accompanist-drawablepainter:0.31.1-alpha")
+
 
 }

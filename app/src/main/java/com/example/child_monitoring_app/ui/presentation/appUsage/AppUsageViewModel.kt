@@ -2,10 +2,15 @@ package com.example.child_monitoring_app.ui.presentation.appUsage
 
 import android.Manifest
 import android.app.Application
+import android.app.usage.UsageEvents
+import android.app.usage.UsageStatsManager
 import android.content.Context
 import android.content.pm.PackageManager
+import android.graphics.drawable.Drawable
 import android.provider.CallLog
 import android.telecom.Call
+import android.util.Log
+import android.util.LruCache
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -93,6 +98,11 @@ class AppUsageViewModel(application: Application) : AndroidViewModel(application
     var hasPermission by mutableStateOf(false)
         private set
 
+    var hasPermissionMain = mutableStateOf(false)
+    var callLogsMain = mutableStateOf(emptyList<CallLogModel>())
+    val showLoaderMain = mutableStateOf(false)
+
+
     init {
         checkPermission()
     }
@@ -147,6 +157,129 @@ class AppUsageViewModel(application: Application) : AndroidViewModel(application
 //    }
 
 
+    val showLoader = mutableStateOf(false)
+
+    private val iconCache = LruCache<String, Drawable>(100)
+
+    fun getCallLogs(context: Context): List<CallLogModel> {
+        val callLogs = mutableListOf<CallLogModel>()
+
+        try {
+            val cursor = context.contentResolver.query(
+                CallLog.Calls.CONTENT_URI, null, null, null, CallLog.Calls.DATE + " DESC"
+            )
+
+            cursor?.use {
+                val numberIndex = it.getColumnIndex(CallLog.Calls.NUMBER)
+                val typeIndex = it.getColumnIndex(CallLog.Calls.TYPE)
+                val dateIndex = it.getColumnIndex(CallLog.Calls.DATE)
+                val durationIndex = it.getColumnIndex(CallLog.Calls.DURATION)
+                val name = it.getColumnIndex(CallLog.Calls.CACHED_NAME)
+
+                while (it.moveToNext()) {
+                    val phoneNumber = it.getString(numberIndex)
+                    val callType = it.getInt(typeIndex)
+                    val callDate = it.getLong(dateIndex)
+                    val callDuration = it.getString(durationIndex)
+                    val userName = it.getString(name)
+
+                    val callDayTime = Date(callDate)
+                    val callDirection = when (callType) {
+                        CallLog.Calls.OUTGOING_TYPE -> CallType.MADE
+                        CallLog.Calls.INCOMING_TYPE -> CallType.RECEIVED
+                        CallLog.Calls.MISSED_TYPE -> CallType.MISSED
+                        else -> CallType.UNKNOWN
+                    }
+
+                    callLogs.add(
+                        CallLogModel(
+                            name = userName?:"Unknown",
+                            number = phoneNumber,
+                            type = callDirection,
+                            duration = callDuration,
+                            date  = callDate.toString()
+                        )
+                    )
+//                callLogs.add("📞 Number: $phoneNumber\n📅 Date: $callDayTime\n🔹 Type: $callDirection\n⏳ Duration: $callDuration sec \n $name")
+                }
+            }
+        } catch (e: SecurityException) {
+            Log.e("CallLogError", "Permission not granted: ${e.message}")
+        }
+        return callLogs
+    }
+
+    fun getAppUsageStats(context: Context, startTime: Long, endTime: Long): List<AppUsageInfo> {
+        val usageStatsManager =
+            context.getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
+        val usageEvents = usageStatsManager.queryEvents(startTime, endTime)
+        val packageManager = context.packageManager
+
+        // Track both usage time and last used timestamp
+        data class UsageData(var totalTime: Long = 0L, var lastUsed: Long = 0L)
+
+        val appUsageMap = mutableMapOf<String, UsageData>()
+
+        var lastForegroundTime = 0L
+        var lastPackageName: String? = null
+
+        val event = UsageEvents.Event()
+        while (usageEvents.hasNextEvent()) {
+            usageEvents.getNextEvent(event)
+
+            when (event.eventType) {
+                UsageEvents.Event.MOVE_TO_FOREGROUND -> {
+                    lastForegroundTime = event.timeStamp
+                    lastPackageName = event.packageName
+                }
+
+                UsageEvents.Event.MOVE_TO_BACKGROUND -> {
+                    if (lastPackageName != null && lastForegroundTime > 0) {
+                        val usageTime = event.timeStamp - lastForegroundTime
+                        val usageData = appUsageMap.getOrDefault(lastPackageName, UsageData())
+                        usageData.totalTime += usageTime
+                        usageData.lastUsed = event.timeStamp
+                        appUsageMap[lastPackageName!!] = usageData
+
+                        lastForegroundTime = 0L
+                        lastPackageName = null
+                    }
+                }
+            }
+        }
+        return appUsageMap.map { (packageName, usageData) ->
+            // First try to get icon from cache
+            var icon = iconCache.get(packageName)
+
+            if (icon == null) {
+                icon = try {
+                    packageManager.getApplicationIcon(packageName).also {
+                        // Store in cache for future use
+                        iconCache.put(packageName, it)
+                    }
+                } catch (e: PackageManager.NameNotFoundException) {
+                    null
+                }
+            }
+
+            val appName = try {
+                val appInfo = packageManager.getApplicationInfo(packageName, 0)
+                // Load label using the ApplicationInfo object
+                packageManager.getApplicationLabel(appInfo).toString()
+            } catch (e: PackageManager.NameNotFoundException) {
+                packageName // Fallback to package name
+            }
+
+            AppUsageInfo(
+                packageName = packageName,
+                appName = appName,
+                usageTime = usageData.totalTime,
+                icon = icon,
+                lastTimeUsed = usageData.lastUsed
+            )
+        }.sortedByDescending { it.lastTimeUsed }
+    }
+
 }
 
 
@@ -161,3 +294,12 @@ data class CallLogModel(
 enum class CallType{
     MISSED,UNKNOWN,MADE,RECEIVED
 }
+
+
+data class AppUsageInfo(
+    val packageName: String,
+    val appName: String,
+    val usageTime: Long,
+    val icon: Drawable?,
+    val lastTimeUsed: Long = 0L
+)
