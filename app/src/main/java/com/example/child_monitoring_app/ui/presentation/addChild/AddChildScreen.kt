@@ -19,10 +19,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.child_monitoring_app.ui.data.ChildData
+import com.example.child_monitoring_app.ui.data.SharedPreference
 import com.example.child_monitoring_app.ui.presentation.login.AuthViewModel
 import com.google.rpc.context.AttributeContext.Auth
 import kotlinx.coroutines.launch
@@ -38,6 +40,8 @@ fun AddChildScreen(
     var password by remember { mutableStateOf("") }
     var message by remember { mutableStateOf("") }
     val coroutineScope = rememberCoroutineScope()
+    val context = LocalContext.current
+    val parentId = SharedPreference.getParentId(context)?:""
 
     Column(modifier = Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.Center) {
         Text(text = "Store User Data", style = MaterialTheme.typography.headlineMedium)
@@ -58,7 +62,8 @@ fun AddChildScreen(
 
         Button(onClick = {
             coroutineScope.launch {
-                val result = viewModel.saveUser(name, age.toIntOrNull() ?: 0, username, password)
+       // 🔹 You should get this from authentication
+                val result = viewModel.saveUser(parentId, name, age.toIntOrNull() ?: 0, username, password)
                 message = result.getOrDefault("Error occurred")
             }
         }, modifier = Modifier.fillMaxWidth()) {
@@ -71,44 +76,3 @@ fun AddChildScreen(
 }
 
 
-@Composable
-fun GetUserScreen(viewModel: AuthViewModel) {
-    var username by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-    var user by remember { mutableStateOf<ChildData?>(null) }
-    var message by remember { mutableStateOf("") }
-    val coroutineScope = rememberCoroutineScope()
-
-    Column(modifier = Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.Center) {
-        Text(text = "Retrieve User Data", style = MaterialTheme.typography.headlineMedium)
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        OutlinedTextField(value = username, onValueChange = { username = it }, label = { Text("Enter Username") }, modifier = Modifier.fillMaxWidth())
-        Spacer(modifier = Modifier.height(16.dp))
-        OutlinedTextField(value = password, onValueChange = { password = it }, label = { Text("Enter Password") }, modifier = Modifier.fillMaxWidth())
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Button(onClick = {
-            coroutineScope.launch {
-                val result = viewModel.getUser(username,password)
-                if (result.isSuccess) {
-                    user = result.getOrNull()
-                } else {
-                    message = result.exceptionOrNull()?.message ?: "User not found"
-                }
-            }
-        }, modifier = Modifier.fillMaxWidth()) {
-            Text("Get User Data")
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        user?.let {
-            Text("Name: ${it.name}", style = MaterialTheme.typography.bodyLarge)
-            Text("Age: ${it.age}", style = MaterialTheme.typography.bodyLarge)
-            Text("Username: ${it.username}", style = MaterialTheme.typography.bodyLarge)
-//            Text("P: ${it.email}", style = MaterialTheme.typography.bodyLarge)
-        } ?: Text(message, color = MaterialTheme.colorScheme.error)
-    }
-}

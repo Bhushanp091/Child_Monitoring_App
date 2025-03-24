@@ -133,18 +133,18 @@ class AppUsageViewModel(application: Application) : AndroidViewModel(application
 
 
 
-
-    suspend fun saveCallLogs(userId: String, callLogs: List<CallLogModel>): Result<String> {
-        return withContext(Dispatchers.IO) {
-            firestoreManager.saveCallLogs(userId, callLogs)
-        }
-    }
-
-    suspend fun getCallLogs(userId: String): Result<List<CallLogModel>> {
-        return withContext(Dispatchers.IO) {
-            firestoreManager.getCallLogs(userId)
-        }
-    }
+//
+//    suspend fun saveCallLogs(userId: String, callLogs: List<CallLogModel>): Result<String> {
+//        return withContext(Dispatchers.IO) {
+//            firestoreManager.saveCallLogs(userId, callLogs)
+//        }
+//    }
+//
+//    suspend fun getCallLogs(userId: String): Result<List<CallLogModel>> {
+//        return withContext(Dispatchers.IO) {
+//            firestoreManager.getCallLogs(userId)
+//        }
+//    }
 
 
 }

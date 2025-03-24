@@ -17,9 +17,11 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.NavController
 import com.example.child_monitoring_app.Screen
 import com.example.child_monitoring_app.ui.presentation.component.TopBar
+import com.example.child_monitoring_app.ui.presentation.login.AuthViewModel
 
 @Composable
 fun DashBoardMainScreen(
+    authViewModel:AuthViewModel,
     navController: NavController
 ) {
 
@@ -65,6 +67,8 @@ fun DashBoardMainScreen(
             ) {
                 Text("Navigate To Show Child Data")
             }
+
+            ChildListScreen(authViewModel)
 
         }
 

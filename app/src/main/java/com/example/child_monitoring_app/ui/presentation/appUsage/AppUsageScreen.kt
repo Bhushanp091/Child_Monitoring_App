@@ -1,11 +1,13 @@
 package com.example.child_monitoring_app.ui.presentation.appUsage
 
+import android.app.AppOpsManager
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import android.app.usage.UsageStats
 import android.app.usage.UsageStatsManager
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.drawable.Drawable
 import android.provider.Settings
@@ -29,73 +31,72 @@ import androidx.compose.ui.graphics.Canvas
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.graphics.drawable.toBitmap
 import com.example.child_monitoring_app.ui.presentation.component.TopBar
+import network.chaintech.sdpcomposemultiplatform.sdp
 
 @Composable
 fun AppUsageScreen(viewModel: AppUsageViewModel) {
 
-    val appUsageData = viewModel.appUsageData
+    val context = LocalContext.current
+    var usageData by remember { mutableStateOf<List<AppUsageInfo>>(emptyList()) }
+    var selectedInterval by remember { mutableStateOf(UsageStatsManager.INTERVAL_DAILY) }
 
-    val isLoading = viewModel.isLoading
-    val currentTimeFrame = viewModel.currentTimeFrame
-    val totalScreenTime = viewModel.getTotalScreenTime()
 
-    Scaffold (
-        topBar = { TopBar("AppUsage") },
-        modifier = Modifier.fillMaxSize()
-    ){paddingValue->
+    LaunchedEffect(selectedInterval) {
+        val calendar = Calendar.getInstance()
+        val endTime = calendar.timeInMillis
+        calendar.add(selectedInterval, -1) // -1 Day, -1 Week, or -1 Month
+        val startTime = calendar.timeInMillis
+        if (hasUsagePermission(context)) {
+            usageData = appUsageViewModel.getAppUsageStats(context, startTime, endTime)
+        }
+    }
 
-        Column(
-            modifier = Modifier
-                .padding(paddingValue)
-                .fillMaxSize()
-                .padding(16.dp)
-        ) {
-            Text(
-                text = "App Usage Stats",
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold
-            )
+    Column(
+        modifier = Modifier
+            .fillMaxSize(),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        CommonToolbar(title = "AppUsage") { }
 
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Text(
-                text = "Total screen time: $totalScreenTime",
-                fontSize = 16.sp,
-                color = MaterialTheme.colorScheme.primary
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            TimeFrameSelector(
-                currentTimeFrame = currentTimeFrame,
-                onTimeFrameSelected = { viewModel.setTimeFrame(it) }
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            if (isLoading) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator()
-                }
-            } else {
+        if (!hasUsagePermission(context)) {
+            Button(onClick = {
+                requestUsagePermission(context)
+            }) {
+                Text("Grant Usage Access")
+            }
+        } else {
+            if (appUsageViewModel.showLoader.value){
+                CircularProgressIndicator()
+            }else{
                 LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                    modifier = Modifier.fillMaxSize()
                 ) {
-                    items(appUsageData) { appUsage ->
-                        AppUsageItem(
-                            appUsage = appUsage,
-                            totalTime = appUsageData.sumOf { it.usageTime },
-                            formatTime = { viewModel.formatTime(it) }
-                        )
+                    item {
+                        Spacer(modifier = Modifier.height(10.sdp))
+                        Row {
+                            Button(onClick = { selectedInterval = Calendar.DAY_OF_MONTH }) {
+                                Text("Daily")
+                            }
+                            Spacer(modifier = Modifier.width(8.sdp))
+                            Button(onClick = { selectedInterval = Calendar.WEEK_OF_YEAR }) {
+                                Text("Weekly")
+                            }
+                            Spacer(modifier = Modifier.width(8.sdp))
+                            Button(onClick = { selectedInterval = Calendar.MONTH }) {
+                                Text("Monthly")
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(16.sdp))
+                    }
+                    items(usageData.toList()) { appUsageInfo ->
+                        AppUsageItem(appUsageInfo)
                     }
                 }
             }
@@ -103,111 +104,80 @@ fun AppUsageScreen(viewModel: AppUsageViewModel) {
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TimeFrameSelector(
-    currentTimeFrame: TimeFrame,
-    onTimeFrameSelected: (TimeFrame) -> Unit
-) {
+fun AppUsageItem(appUsageInfo: AppUsageInfo) {
+
+    val context = LocalContext.current
+    val formattedTime = formatMillisToTime(appUsageInfo.usageTime)
+
+    val appIcon: Drawable? = remember {
+        try {
+            context.packageManager.getApplicationIcon(appUsageInfo.packageName)
+        } catch (e: PackageManager.NameNotFoundException) {
+            null
+        }
+    }
+
+
     Row(
         modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(8.dp))
-            .background(MaterialTheme.colorScheme.surfaceVariant)
-            .padding(4.dp),
-        horizontalArrangement = Arrangement.SpaceEvenly
+            .background(color = Color.White)
+            .padding(vertical = 10.sdp)
+            .padding(start = 8.sdp, end = 8.sdp)
+            .fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        TimeFrame.values().forEach { timeFrame ->
-            val selected = timeFrame == currentTimeFrame
-            FilterChip(
-                selected = selected,
-                onClick = { onTimeFrameSelected(timeFrame) },
-                label = {
-                    Text(
-                        text = timeFrame.name.lowercase().capitalize(),
-                        modifier = Modifier.padding(horizontal = 8.dp)
-                    )
-                },
-                colors = FilterChipDefaults.filterChipColors(
-                    selectedContainerColor = MaterialTheme.colorScheme.primary,
-                    selectedLabelColor = MaterialTheme.colorScheme.onPrimary
-                )
+
+        if (appIcon != null) {
+            Image(
+                painter = rememberDrawablePainter(drawable = appIcon),
+                contentDescription = "${appUsageInfo.appName} Icon",
+                modifier = Modifier
+                    .size(38.sdp)
+                    .clip(CircleShape)
+            )
+        } else {
+            Image(
+                painter = painterResource(R.drawable.ic_launcher_foreground),
+                contentDescription = "${appUsageInfo.appName} Icon",
+                modifier = Modifier
+                    .background(color = MaterialTheme.colorScheme.primary, shape = CircleShape)
+                    .size(38.sdp)
+                    .clip(CircleShape)
             )
         }
-    }
-}
 
-@Composable
-fun AppUsageItem(
-    appUsage: AppUsageData,
-    totalTime: Long,
-    formatTime: (Long) -> String
-) {
-    val usagePercentage = (appUsage.usageTime.toFloat() / totalTime) * 100
+        Spacer(modifier = Modifier.width(12.sdp)) // Space between icon and text
 
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            appUsage.appIcon?.let { drawable ->
-                AppIcon(drawable = drawable)
-                Spacer(modifier = Modifier.width(16.dp))
-            }
-
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = appUsage.appName,
-                    fontWeight = FontWeight.Bold
-                )
-
-                Spacer(modifier = Modifier.height(4.dp))
-
-                LinearProgressIndicator(
-                    progress = { usagePercentage / 100 },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(8.dp)
-                        .clip(RoundedCornerShape(4.dp))
-                )
-            }
-
-            Spacer(modifier = Modifier.width(16.dp))
-
+        // Column for App Name and Usage Time
+        Column {
+            Text(text = appUsageInfo.appName, style = MaterialTheme.typography.bodyLarge)
             Text(
-                text = formatTime(appUsage.usageTime),
-                fontWeight = FontWeight.Medium
+                text = "Usage Time: $formattedTime",
+                style = MaterialTheme.typography.bodyMedium
             )
         }
     }
+    HorizontalDivider(
+        thickness = 1.sdp,
+        color = Color.LightGray,
+        modifier = Modifier.fillMaxWidth()
+    )
 }
 
-@Composable
-fun AppIcon(drawable: Drawable, modifier: Modifier = Modifier) {
-    val bitmap = remember(drawable) {
-        try {
-            drawable.toBitmap(width = 48, height = 48)
-        } catch (e: Exception) {
-            Bitmap.createBitmap(48, 48, Bitmap.Config.ARGB_8888).apply {
-                val canvas = android.graphics.Canvas(this)
-                drawable.setBounds(0, 0, canvas.width, canvas.height)
-                drawable.draw(canvas)
-            }
-        }
-    }
-
-    Image(
-        bitmap = bitmap.asImageBitmap(),
-        contentDescription = "App icon",
-        modifier = modifier
-            .size(48.dp)
-            .clip(CircleShape)
+fun hasUsagePermission(context: Context): Boolean {
+    val appOps = context.getSystemService(Context.APP_OPS_SERVICE) as AppOpsManager
+    val mode = appOps.checkOpNoThrow(
+        AppOpsManager.OPSTR_GET_USAGE_STATS,
+        android.os.Process.myUid(),
+        context.packageName
     )
+    return mode == AppOpsManager.MODE_ALLOWED
+}
+
+fun requestUsagePermission(context: Context) {
+    val intent = Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)
+    context.startActivity(intent)
 }
 
 

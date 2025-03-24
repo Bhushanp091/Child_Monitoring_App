@@ -1,4 +1,4 @@
-package com.example.child_monitoring_app.ui.presentation.login
+package com.example.child_monitoring_app.ui.presentation.login.ui
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -6,12 +6,12 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.child_monitoring_app.Screen
+import com.example.child_monitoring_app.ui.presentation.login.AuthViewModel
 import kotlinx.coroutines.launch
 
 @Composable
@@ -21,7 +21,9 @@ fun LoginScreen(navController: NavController,authViewModel: AuthViewModel) {
     var isSignUp by remember { mutableStateOf(false) }
     var message by remember { mutableStateOf("") }
     var isLogIn by remember { mutableStateOf(false) }
+    var name by remember { mutableStateOf("") }
     val coroutineScope = rememberCoroutineScope()
+    val context = LocalContext.current
 
     LaunchedEffect (isLogIn){
         if (isLogIn){
@@ -63,8 +65,8 @@ fun LoginScreen(navController: NavController,authViewModel: AuthViewModel) {
         Button(
             onClick = {
                 coroutineScope.launch {
-                    val result = if (isSignUp) authViewModel.signUp(email, password)
-                    else authViewModel.login(email, password)
+                    val result = if (isSignUp) authViewModel.signUp(email, password,name)
+                    else authViewModel.login(email, password,context)
                     message = result.getOrDefault("Error occurred")
                     if (message != "Error occurred") {
                         isLogIn = true
@@ -78,7 +80,10 @@ fun LoginScreen(navController: NavController,authViewModel: AuthViewModel) {
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        TextButton(onClick = { isSignUp = !isSignUp }) {
+        TextButton(onClick = {
+            isSignUp = !isSignUp
+            navController.navigate(Screen.SignUp.route)
+        }) {
             Text(if (isSignUp) "Already have an account? Login" else "Don't have an account? Sign Up")
         }
 
