@@ -8,9 +8,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.example.child_monitoring_app.ui.presentation.component.CommonButton
+import com.example.child_monitoring_app.ui.presentation.login.AuthViewModel
 
 @Composable
-fun ChildDashBoardScreen(modifier: Modifier = Modifier) {
+fun ChildDashBoardScreen(authViewModel: AuthViewModel) {
     Column (
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.Center,
@@ -23,5 +24,8 @@ fun ChildDashBoardScreen(modifier: Modifier = Modifier) {
 
             }
         )
+
+        GetUserScreen(authViewModel)
+
     }
 }

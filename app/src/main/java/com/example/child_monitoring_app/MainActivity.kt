@@ -13,6 +13,8 @@ import com.example.child_monitoring_app.ui.presentation.addChild.AddChildScreen
 import com.example.child_monitoring_app.ui.presentation.appUsage.AppUsageScreen
 import com.example.child_monitoring_app.ui.presentation.appUsage.AppUsageViewModel
 import com.example.child_monitoring_app.ui.presentation.appUsage.CallLogHistoryScreen
+import com.example.child_monitoring_app.ui.presentation.appUsage.PhoneNumberList
+import com.example.child_monitoring_app.ui.presentation.browser.BrowserHistoryScreen
 import com.example.child_monitoring_app.ui.presentation.dashBoard.ChildDashBoardScreen
 import com.example.child_monitoring_app.ui.presentation.dashBoard.DashBoardMainScreen
 import com.example.child_monitoring_app.ui.presentation.dashBoard.GetUserScreen
@@ -66,7 +68,7 @@ fun Navigation() {
         }
 
         composable(Screen.DashBoard.route) {
-            DashBoardMainScreen(authViewModel,navController)
+            DashBoardMainScreen(appUsageViewModel,authViewModel,navController)
         }
 
         composable(Screen.AddChild.route) {
@@ -86,17 +88,24 @@ fun Navigation() {
             CallLogHistoryScreen(appUsageViewModel){}
         }
 
-        composable(Screen.ShowChildData.route) {
-            GetUserScreen(authViewModel)
-        }
+
 
         composable(Screen.LocationScreen.route) {
             ShowLocationScreen()
         }
 
         composable(Screen.ChildDashBoard.route) {
-            ChildDashBoardScreen()
+            ChildDashBoardScreen(authViewModel)
         }
+
+        composable(Screen.PhoneNumberList.route) {
+            PhoneNumberList()
+        }
+
+        composable(Screen.BrowserHistory.route) {
+            BrowserHistoryScreen()
+        }
+
 
 
     }
@@ -115,6 +124,7 @@ sealed class Screen(val route: String) {
     object PreLogin : Screen("pre_login")
     object ChildLogin : Screen("child_login")
     object AddChild : Screen("add_Child")
-    object ShowChildData : Screen("show_child_data")
     object LocationScreen:Screen("show_location")
+    object PhoneNumberList:Screen("phone_number_list")
+    object BrowserHistory:Screen("browser_history_list")
 }

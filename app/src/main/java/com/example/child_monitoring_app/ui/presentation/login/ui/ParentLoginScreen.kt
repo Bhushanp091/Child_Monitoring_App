@@ -133,6 +133,12 @@ fun ParentLoginScreen(
         }
     }
 
+//    LaunchedEffect(message) {
+//        if (message == "Login successful") {
+//            navController.navigate(Screen.ChildDashBoard.route)
+//        }
+//    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -257,9 +263,9 @@ fun ParentLoginScreen(
                                 val result =
                                     if (isSignUp) authViewModel.signUp(email, password, name)
                                     else authViewModel.login(email, password, context)
-                                message = result.getOrDefault("Error occurred")
-                                if (message != "Error occurred") {
-                                    context.toast(message, ToastType.ERROR)
+                                message = result.getOrDefault("Wrong Credentials")
+                                context.toast(message, ToastType.ERROR)
+                                if (message != "Wrong Credentials") {
                                     isLogIn = true
                                 }
                             }
@@ -294,6 +300,7 @@ fun ParentLoginScreen(
                         Modifier.clickable { navController.navigate(Screen.SignUp.route) })
 
                 }
+                Text(text = message, color = MaterialTheme.colorScheme.error)
             }
         }
     }
