@@ -3,6 +3,7 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.google.gms.google.services)
+//    id("com.google.android.libraries.mapsplatform.secrets-gradle-plugin") version "2.1.0" apply false
 }
 
 android {
@@ -66,6 +67,7 @@ dependencies {
     implementation("network.chaintech:sdp-ssp-compose-multiplatform:1.0.5")
     implementation ("androidx.navigation:navigation-compose:2.8.8")
     implementation ("com.google.accompanist:accompanist-drawablepainter:0.31.1-alpha")
+    implementation ("com.google.android.gms:play-services-location:21.0.1")
 
 
 }
