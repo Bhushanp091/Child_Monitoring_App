@@ -44,7 +44,7 @@ fun AddChildScreen(
     val parentId = SharedPreference.getParentId(context)?:""
 
     Column(modifier = Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.Center) {
-        Text(text = "Store User Data", style = MaterialTheme.typography.headlineMedium)
+        Text(text = "Add New Child", style = MaterialTheme.typography.headlineMedium)
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -67,7 +67,7 @@ fun AddChildScreen(
                 message = result.getOrDefault("Error occurred")
             }
         }, modifier = Modifier.fillMaxWidth()) {
-            Text("Save User Data")
+            Text("Add Child Data")
         }
 
         Spacer(modifier = Modifier.height(16.dp))

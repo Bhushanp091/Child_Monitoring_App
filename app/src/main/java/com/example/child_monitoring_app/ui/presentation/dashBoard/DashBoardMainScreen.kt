@@ -143,7 +143,14 @@ fun DashBoardMainScreen(
                     containerColor = MaterialTheme.colorScheme.primary
                 )
             )
-        }
+        },
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = { navController.navigate(Screen.AddChild.route) }
+            ) {
+                Icon(Icons.Default.Add, "")
+            }
+        },
     ) { paddingValues ->
         Box(
             modifier = Modifier
