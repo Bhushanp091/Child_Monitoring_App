@@ -18,6 +18,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.example.child_monitoring_app.ui.data.ChildData
 import com.example.child_monitoring_app.ui.presentation.login.AuthViewModel
@@ -30,6 +31,7 @@ fun GetUserScreen(viewModel: AuthViewModel) {
     var user by remember { mutableStateOf<ChildData?>(null) }
     var message by remember { mutableStateOf("") }
     val coroutineScope = rememberCoroutineScope()
+    val context = LocalContext.current
 
     Column(modifier = Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.Center) {
         Text(text = "Retrieve User Data", style = MaterialTheme.typography.headlineMedium)
@@ -43,7 +45,7 @@ fun GetUserScreen(viewModel: AuthViewModel) {
 
         Button(onClick = {
             coroutineScope.launch {
-                val result = viewModel.getUser(username,password)
+                val result = viewModel.childLogin(username,password,context)
                 if (result.isSuccess) {
                     user = result.getOrNull()
                 } else {

@@ -7,6 +7,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import com.example.child_monitoring_app.ui.data.FirebaseAuthManager
+import com.example.child_monitoring_app.ui.data.SharedPreference
 import com.example.child_monitoring_app.ui.presentation.component.CommonButton
 import com.example.child_monitoring_app.ui.presentation.login.AuthViewModel
 
@@ -17,15 +20,19 @@ fun ChildDashBoardScreen(authViewModel: AuthViewModel) {
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ){
-        Text("This is child Home screen here all data will be collected :)")
+//        Text("This is child Home screen here all data will be collected :)")
+        val context = LocalContext.current
+        val childId  = SharedPreference.getChildId(context)?:""
         CommonButton(
             text = "Nacho",
             onClick = {
-
+                println("Firebase store child data")
+                authViewModel.storeChildData(context,childId)
             }
         )
 
-        GetUserScreen(authViewModel)
+//        GetUserScreen(authViewModel)
 
     }
 }
+

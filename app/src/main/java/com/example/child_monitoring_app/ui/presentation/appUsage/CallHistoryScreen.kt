@@ -24,6 +24,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.child_monitoring_app.R
+import com.example.child_monitoring_app.ui.data.SharedPreference
+import com.example.child_monitoring_app.ui.data.callHistory.getCallLogs
 import com.example.child_monitoring_app.ui.presentation.component.TopBar
 import com.example.child_monitoring_app.ui.presentation.dashBoard.CommonToolbar
 import network.chaintech.sdpcomposemultiplatform.sdp
@@ -33,7 +35,7 @@ import network.chaintech.sdpcomposemultiplatform.ssp
 @Composable
 fun CallLogHistoryScreen(
     appUsageViewModel: AppUsageViewModel,
-    onBackClick:()->Unit
+    onBackClick: () -> Unit
 ) {
 
     val context = LocalContext.current
@@ -42,9 +44,9 @@ fun CallLogHistoryScreen(
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission(),
         onResult = { isGranted ->
-            appUsageViewModel.hasPermissionMain.value= isGranted
+            appUsageViewModel.hasPermissionMain.value = isGranted
             if (isGranted) {
-                appUsageViewModel.callLogsMain.value = appUsageViewModel.getCallLogs(context)
+                appUsageViewModel.callLogsMain.value = getCallLogs(context)
             }
         }
     )
@@ -52,7 +54,7 @@ fun CallLogHistoryScreen(
     LaunchedEffect(Unit) {
         if (context.checkSelfPermission(Manifest.permission.READ_CALL_LOG) == PackageManager.PERMISSION_GRANTED) {
             appUsageViewModel.hasPermissionMain.value = true
-            appUsageViewModel.callLogsMain.value = appUsageViewModel.getCallLogs(context)
+            appUsageViewModel.callLogsMain.value = getCallLogs(context)
         }
     }
 
@@ -67,7 +69,7 @@ fun CallLogHistoryScreen(
             onBackClick = onBackClick
         )
 
-        if (! appUsageViewModel.hasPermissionMain.value) {
+        if (!appUsageViewModel.hasPermissionMain.value) {
             Button(
                 onClick = {
                     permissionLauncher.launch(Manifest.permission.READ_CALL_LOG)
@@ -82,14 +84,13 @@ fun CallLogHistoryScreen(
             LazyColumn(
                 modifier = Modifier
             ) {
-                items( appUsageViewModel.callLogsMain.value) {
+                items(appUsageViewModel.callLogsMain.value) {
                     CallLogHistoryInfoBox(it)
                 }
             }
         }
     }
 }
-
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -155,11 +156,19 @@ fun CallLogHistoryInfoBox(callLogModel: CallLogModel) {
         ) {
             Icon(
                 painter = painterResource(
+//                    when (callLogModel.type) {
+//                        CallType.MISSED -> R.drawable.icon_phone_missed
+//                        CallType.MADE -> R.drawable.icon_phone_missed
+//                        CallType.RECEIVED -> R.drawable.icon_phone_missed
+//                        CallType.UNKNOWN -> R.drawable.icon_phone_missed
+//                    }
+
                     when (callLogModel.type) {
-                        CallType.MISSED -> R.drawable.icon_phone_missed
-                        CallType.MADE -> R.drawable.icon_phone_missed
-                        CallType.RECEIVED -> R.drawable.icon_phone_missed
-                        CallType.UNKNOWN -> R.drawable.icon_phone_missed
+                        "MISSED" -> R.drawable.icon_phone_missed
+                        "MADE" -> R.drawable.icon_phone_missed
+                        "RECEIVED" -> R.drawable.icon_phone_missed
+                        "UNKNOWN" -> R.drawable.icon_phone_missed
+                        else -> R.drawable.icon_phone_missed
                     }
                 ),
                 contentDescription = "Call Type",
@@ -197,4 +206,45 @@ fun CallLogHistoryInfoBox(callLogModel: CallLogModel) {
             fontSize = 14.ssp
         )
     }
+}
+
+
+@Composable
+fun ShowChildCallHistory(appUsageViewModel: AppUsageViewModel) {
+    val context = LocalContext.current
+    val parenId = SharedPreference.getParentId(context) ?: ""
+    val childId = remember { mutableStateOf("Child") }
+    val flag = remember { mutableStateOf(true) }
+
+    LaunchedEffect(Unit) {
+        appUsageViewModel.firestoreManager.fetchCallLogsFromFirebase(parenId, childId.value) {
+            if (flag.value) {
+                println("Fetch call Logs $it")
+                appUsageViewModel.callLogsMain.value = it
+                flag.value = !flag.value
+            }
+        }
+    }
+
+
+
+
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        CommonToolbar(
+            title = "CallLog History",
+            onBackClick = {}
+        )
+        LazyColumn(
+            modifier = Modifier
+        ) {
+            items(appUsageViewModel.callLogsMain.value) {
+                CallLogHistoryInfoBox(it)
+            }
+        }
+    }
+
 }

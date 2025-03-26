@@ -2,24 +2,26 @@ package com.example.child_monitoring_app.ui.data
 
 import android.content.Context
 import android.util.Log
+import androidx.compose.runtime.mutableStateOf
+import com.example.child_monitoring_app.ui.data.callHistory.getCallLogs
 import com.example.child_monitoring_app.ui.presentation.appUsage.CallLogModel
-import com.example.child_monitoring_app.ui.presentation.appUsage.CallType
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
 
-class FirebaseAuthManager (){
+class FirebaseAuthManager() {
     private val auth: FirebaseAuth = FirebaseAuth.getInstance()
     private val firestore = FirebaseFirestore.getInstance()
 
-    suspend fun login(email: String, password: String,context: Context): Result<String> {
+    suspend fun login(email: String, password: String, context: Context): Result<String> {
         return try {
             auth.signInWithEmailAndPassword(email, password).await()
             val authResult = auth.signInWithEmailAndPassword(email, password).await()
-            val parentId = authResult.user?.uid ?: return Result.failure(Exception("User ID not found"))
+            val parentId =
+                authResult.user?.uid ?: return Result.failure(Exception("User ID not found"))
 
             // Store Parent ID in SharedPreferences
-            SharedPreference.saveParentIdLocally(context,parentId)
+            SharedPreference.saveParentIdLocally(context, parentId)
             Result.success("Login successful")
         } catch (e: Exception) {
             Result.failure(e)
@@ -29,7 +31,8 @@ class FirebaseAuthManager (){
     suspend fun signUpParent(email: String, password: String, name: String): Result<String> {
         return try {
             val authResult = auth.createUserWithEmailAndPassword(email, password).await()
-            val parentId = authResult.user?.uid ?: return Result.failure(Exception("User ID not found"))
+            val parentId =
+                authResult.user?.uid ?: return Result.failure(Exception("User ID not found"))
 
             val parentData = hashMapOf(
                 "name" to name,
@@ -46,8 +49,13 @@ class FirebaseAuthManager (){
     }
 
 
-
-    suspend fun saveNewChildData(parentId: String, name: String, age: Int, username: String, password: String): Result<String> {
+    suspend fun saveNewChildData(
+        parentId: String,
+        name: String,
+        age: Int,
+        username: String,
+        password: String
+    ): Result<String> {
         val childData = hashMapOf(
             "name" to name,
             "age" to age.toString(),
@@ -73,15 +81,16 @@ class FirebaseAuthManager (){
             Result.failure(e)
         }
     }
+
     suspend fun getChildrenList(): List<ChildData> {
-        val parentId = FirebaseAuth.getInstance().currentUser?.uid
+        val parentId = auth.currentUser?.uid
         if (parentId == null) {
             Log.e("Firestore", "Parent not logged in")
             return emptyList()
         }
 
         return try {
-            val snapshot = FirebaseFirestore.getInstance()
+            val snapshot = firestore
                 .collection("parents").document(parentId)
                 .collection("children").get().await()
 
@@ -99,27 +108,38 @@ class FirebaseAuthManager (){
         }
     }
 
+    suspend fun getChildId(): String {
+        val parentId = auth.currentUser?.uid
+        val childId = mutableStateOf("")
+        if (parentId == null) {
+            Log.e("Firestore", "Parent not logged in")
+            return ""
+        }
 
-    // 🔹 Retrieve user data from Firestore (by username)
-//    suspend fun getChildData(parentId: String, username: String, password: String): Result<ChildData> {
-//        return try {
-//            val docRef = firestore.collection("parents").document(parentId)
-//                .collection("children").whereEqualTo("username", username)
-//                .whereEqualTo("password", password)
-//                .get().await()
-//
-//            if (!docRef.isEmpty) {
-//                val child = docRef.documents[0].toObject(ChildData::class.java)
-//                if (child != null) Result.success(child) else Result.failure(Exception("Child not found"))
-//            } else {
-//                Result.failure(Exception("Child not found"))
-//            }
-//        } catch (e: Exception) {
-//            Result.failure(e)
-//        }
-//    }
+        return try {
+            val snapshot = firestore
+                .collection("parents").document(parentId)
+                .collection("children").get().await()
 
-    suspend fun getChildData(username: String, password: String): Result<ChildData> {
+            if (snapshot.isEmpty) {
+                childId.value = snapshot.documents[0].id
+                Log.e("Firestore", "No children found for parent: $parentId")
+            }
+
+            childId.value
+
+        } catch (e: Exception) {
+            Log.e("Firestore", "Error fetching children: ${e.message}")
+            ""
+        }
+    }
+
+
+    suspend fun childLogin(
+        username: String,
+        password: String,
+        context: Context
+    ): Result<ChildData> {
         val parents = firestore.collection("parents").get().await()
 
         for (parent in parents) {
@@ -128,15 +148,23 @@ class FirebaseAuthManager (){
                 .whereEqualTo("password", password)
                 .get().await()
 
+
             if (!snapshot.isEmpty) {
+                val document = snapshot.documents[0]  // Get first matching document
                 val child = snapshot.documents[0].toObject(ChildData::class.java)
+                val childId = document.id
+                SharedPreference.saveChildIdLocally(context, childId)//saving child id here
                 return Result.success(child!!)
             }
         }
         return Result.failure(Exception("Child not found"))
     }
 
-    suspend fun saveCallLogs(parentId: String, childUsername: String, callLogs: List<CallLogModel>): Result<String> {
+    suspend fun saveCallLogs(
+        parentId: String,
+        childUsername: String,
+        callLogs: List<CallLogModel>
+    ): Result<String> {
         return try {
             firestore.collection("parents").document(parentId)
                 .collection("children").document(childUsername)
@@ -148,101 +176,94 @@ class FirebaseAuthManager (){
         }
     }
 
-    // 🔹 Retrieve Call Logs for Child
-    suspend fun getCallLogs(parentId: String, childUsername: String): Result<List<CallLogModel>> {
-        return try {
-            val snapshot = firestore.collection("parents").document(parentId)
-                .collection("children").document(childUsername).get().await()
+    fun uploadCallLogsToFirebase(context: Context, username: String) {
+        val callLogs = getCallLogs(context)
+        println("CallLogs $callLogs")
+        println("Username $username")
 
-            val callLogs = snapshot["data.callLogs"] as? List<Map<String, Any>> ?: emptyList()
+        // Step 1: Find the correct parent that has this child
+        firestore.collection("parents")
+            .get()
+            .addOnSuccessListener { parentSnapshot ->
+                for (parentDoc in parentSnapshot.documents) {
+                    val parentId = parentDoc.id  // Get the parent document ID
 
-            val parsedLogs = callLogs.map { log ->
-                CallLogModel(
-                    name = log["name"] as String,
-                    number = log["number"] as String,
-                    type = when(log["type"] as String) {
-                        "INCOMING" -> CallType.RECEIVED
-                        "OUTGOING" -> CallType.MADE
-                        "MISSED" -> CallType.MISSED
-                        else -> CallType.UNKNOWN
-                    },
-                    date = log["date"] as String,
-                    duration = log["duration"] as String
-                )
+                    // Step 2: Find the child document inside this parent's "children" collection
+                    firestore.collection("parents").document(parentId)
+                        .collection("children")
+                        .whereEqualTo("username", username) // Find child by username
+                        .get()
+                        .addOnSuccessListener { childSnapshot ->
+                            if (!childSnapshot.isEmpty) {
+                                val childDoc = childSnapshot.documents[0]
+                                val childId = childDoc.id  // Get the child document ID
+
+                                // Step 3: Prepare call logs data
+                                val callLogsList = callLogs.map { log ->
+                                    hashMapOf(
+                                        "name" to log.name,
+                                        "number" to log.number,
+                                        "type" to log.type.toString(),
+                                        "duration" to log.duration,
+                                        "date" to log.date
+                                    )
+                                }
+
+                                // Step 4: Update Firestore at the correct path
+                                firestore.collection("parents").document(parentId)
+                                    .collection("children").document(childId)
+                                    .update("data.callLogs", callLogsList)
+                                    .addOnSuccessListener {
+                                        Log.d("Firebase", "Call logs updated successfully")
+                                    }
+                                    .addOnFailureListener {
+                                        Log.e("Firebase", "Error updating call logs: ${it.message}")
+                                    }
+                            } else {
+                                Log.e("Firebase", "No child document found for username: $username")
+                            }
+                        }
+                        .addOnFailureListener {
+                            Log.e("Firebase", "Error fetching child document: ${it.message}")
+                        }
+                }
             }
-
-            Result.success(parsedLogs)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
+            .addOnFailureListener {
+                Log.e("Firebase", "Error fetching parent document: ${it.message}")
+            }
     }
 
 
 
-}
-
-
-
-
-class FirebaseAuthService {
-    private val auth = FirebaseAuth.getInstance()
-    private val db = FirebaseFirestore.getInstance()
-
-    // Sign Up Parent
-    fun signUpParent(email: String, password: String, name: String, onResult: (Boolean, String?) -> Unit) {
-        auth.createUserWithEmailAndPassword(email, password)
-            .addOnCompleteListener { task ->
-                if (task.isSuccessful) {
-                    val userId = task.result?.user?.uid
-                    if (userId != null) {
-                        val parentData = hashMapOf(
-                            "name" to name,
-                            "email" to email,
-                            "childrenCount" to 0
+    fun fetchCallLogsFromFirebase(parentId: String, childId: String, onResult: (List<CallLogModel>) -> Unit) {
+        firestore.collection("parents").document(parentId)
+            .collection("children").document(childId)
+            .get()
+            .addOnSuccessListener { document ->
+                if (document.exists()) {
+                    val callLogsList = document.get("data.callLogs") as? List<HashMap<String, Any>>
+                    val callLogs = callLogsList?.map { log ->
+                        CallLogModel(
+                            name = log["name"] as? String ?: "",
+                            number = log["number"] as? String ?: "",
+                            type = log["type"] as? String ?: "",
+                            duration = log["duration"] as? String ?: "",
+                            date = log["date"] as? String ?: ""
                         )
-                        db.collection("parents").document(userId).set(parentData)
-                            .addOnSuccessListener { onResult(true, null) }
-                            .addOnFailureListener { onResult(false, it.message) }
-                    }
+                    } ?: emptyList()
+
+                    onResult(callLogs)
                 } else {
-                    onResult(false, task.exception?.message)
+                    Log.e("Firebase", "Child document not found")
+                    onResult(emptyList())
                 }
             }
+            .addOnFailureListener { Log.e("Firebase", "Error fetching call logs: ${it.message}") }
     }
 
-    // Login Parent
-    fun loginParent(email: String, password: String, onResult: (Boolean, String?) -> Unit) {
-        auth.signInWithEmailAndPassword(email, password)
-            .addOnCompleteListener { task ->
-                if (task.isSuccessful) {
-                    onResult(true, null)
-                } else {
-                    onResult(false, task.exception?.message)
-                }
-            }
-    }
 
-    // Add Child to Firestore
-    fun addChild(parentId: String, name: String, age: Int, gender: String, username: String, password: String, onResult: (Boolean, String?) -> Unit) {
-        val childData = hashMapOf(
-            "name" to name,
-            "age" to age,
-            "gender" to gender,
-            "username" to username,
-            "password" to password,
-            "data" to hashMapOf(
-                "location" to null,
-                "appUsage" to emptyList<HashMap<String, Any>>(),
-                "contacts" to emptyList<HashMap<String, Any>>(),
-                "callLogs" to emptyList<HashMap<String, Any>>(),
-                "browserHistory" to emptyList<HashMap<String, Any>>(),
-                "youtubeHistory" to emptyList<HashMap<String, Any>>()
-            )
-        )
 
-        db.collection("parents").document(parentId).collection("children").document(username)
-            .set(childData)
-            .addOnSuccessListener { onResult(true, null) }
-            .addOnFailureListener { onResult(false, it.message) }
-    }
 }
+
+
+

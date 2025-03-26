@@ -7,7 +7,6 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PlayArrow
@@ -33,38 +32,38 @@ import com.example.child_monitoring_app.ui.theme.buttonColor
 import kotlinx.coroutines.launch
 
 
-
-@Composable
-fun ChildLoginScreenOld(viewModel: AuthViewModel, navController: NavController) {
-    var username by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-    var message by remember { mutableStateOf("") }
-    val coroutineScope = rememberCoroutineScope()
-
-    Column(modifier = Modifier
-        .fillMaxSize()
-        .padding(16.dp), verticalArrangement = Arrangement.Center) {
-        Text(text = "Child Login", style = MaterialTheme.typography.headlineMedium)
-        Spacer(modifier = Modifier.height(16.dp))
-
-        OutlinedTextField(value = username, onValueChange = { username = it }, label = { Text("Username") }, modifier = Modifier.fillMaxWidth())
-        Spacer(modifier = Modifier.height(8.dp))
-        OutlinedTextField(value = password, onValueChange = { password = it }, label = { Text("Password") }, visualTransformation = PasswordVisualTransformation(), modifier = Modifier.fillMaxWidth())
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Button(onClick = {
-            coroutineScope.launch {
-                val result = viewModel.getUser(username, password)
-                message = if (result.isSuccess) "Login successful" else "Login failed"
-            }
-        }, modifier = Modifier.fillMaxWidth()) {
-            Text("Login")
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-        Text(text = message, color = MaterialTheme.colorScheme.error)
-    }
-}
+//
+//@Composable
+//fun ChildLoginScreenOld(viewModel: AuthViewModel, navController: NavController) {
+//    var username by remember { mutableStateOf("") }
+//    var password by remember { mutableStateOf("") }
+//    var message by remember { mutableStateOf("") }
+//    val coroutineScope = rememberCoroutineScope()
+//
+//    Column(modifier = Modifier
+//        .fillMaxSize()
+//        .padding(16.dp), verticalArrangement = Arrangement.Center) {
+//        Text(text = "Child Login", style = MaterialTheme.typography.headlineMedium)
+//        Spacer(modifier = Modifier.height(16.dp))
+//
+//        OutlinedTextField(value = username, onValueChange = { username = it }, label = { Text("Username") }, modifier = Modifier.fillMaxWidth())
+//        Spacer(modifier = Modifier.height(8.dp))
+//        OutlinedTextField(value = password, onValueChange = { password = it }, label = { Text("Password") }, visualTransformation = PasswordVisualTransformation(), modifier = Modifier.fillMaxWidth())
+//        Spacer(modifier = Modifier.height(16.dp))
+//
+//        Button(onClick = {
+//            coroutineScope.launch {
+//                val result = viewModel.childLogin(username, password)
+//                message = if (result.isSuccess) "Login successful" else "Login failed"
+//            }
+//        }, modifier = Modifier.fillMaxWidth()) {
+//            Text("Login")
+//        }
+//
+//        Spacer(modifier = Modifier.height(16.dp))
+//        Text(text = message, color = MaterialTheme.colorScheme.error)
+//    }
+//}
 
 
 @Composable
@@ -217,7 +216,7 @@ fun ChildLoginScreen(
                         onClick = {
                             if (username.isNotEmpty() && password.isNotEmpty()) {
                                 coroutineScope.launch {
-                                    val result = authViewModel.getUser(username, password)
+                                    val result = authViewModel.childLogin(username, password,context)
                                     message = if (result.isSuccess) "Login successful" else "Login failed"
                                     context.toast(message,ToastType.ERROR)
                                 }

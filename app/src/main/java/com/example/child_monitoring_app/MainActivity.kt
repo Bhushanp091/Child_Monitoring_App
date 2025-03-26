@@ -14,6 +14,7 @@ import com.example.child_monitoring_app.ui.presentation.appUsage.AppUsageScreen
 import com.example.child_monitoring_app.ui.presentation.appUsage.AppUsageViewModel
 import com.example.child_monitoring_app.ui.presentation.appUsage.CallLogHistoryScreen
 import com.example.child_monitoring_app.ui.presentation.appUsage.PhoneNumberList
+import com.example.child_monitoring_app.ui.presentation.appUsage.ShowChildCallHistory
 import com.example.child_monitoring_app.ui.presentation.browser.BrowserHistoryScreen
 import com.example.child_monitoring_app.ui.presentation.dashBoard.ChildDashBoardScreen
 import com.example.child_monitoring_app.ui.presentation.dashBoard.DashBoardMainScreen
@@ -49,6 +50,7 @@ fun Navigation() {
     NavHost(
         navController = navController,
         startDestination = Screen.PreLogin.route
+//        startDestination = Screen.DashBoard.route
     ) {
 
         composable(Screen.PreLogin.route) {
@@ -85,7 +87,8 @@ fun Navigation() {
         }
 
         composable(Screen.CallHistory.route) {
-            CallLogHistoryScreen(appUsageViewModel){}
+            ShowChildCallHistory(appUsageViewModel)
+//            CallLogHistoryScreen(appUsageViewModel){}
         }
 
 

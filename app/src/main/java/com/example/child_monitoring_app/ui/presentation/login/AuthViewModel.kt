@@ -1,13 +1,13 @@
 package com.example.child_monitoring_app.ui.presentation.login
 
 import android.content.Context
-import androidx.lifecycle.ViewModel
 import com.example.child_monitoring_app.ui.data.ChildData
 import com.example.child_monitoring_app.ui.data.FirebaseAuthManager
+import com.example.child_monitoring_app.ui.presentation.BaseViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-class AuthViewModel : ViewModel() {
+class AuthViewModel : BaseViewModel() {
     private val authManager = FirebaseAuthManager()
 
 
@@ -29,9 +29,9 @@ class AuthViewModel : ViewModel() {
         }
     }
 
-    suspend fun getUser(username: String,password: String): Result<ChildData> {
+    suspend fun childLogin(username: String, password: String,context: Context): Result<ChildData> {
         return withContext(Dispatchers.IO) {
-            authManager.getChildData(username,password)
+            authManager.childLogin(username,password,context)
         }
     }
 

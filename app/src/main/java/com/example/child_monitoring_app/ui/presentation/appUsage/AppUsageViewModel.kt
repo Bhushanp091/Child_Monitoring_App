@@ -31,7 +31,7 @@ import java.util.Locale
 
 
 class AppUsageViewModel(application: Application) : AndroidViewModel(application) {
-    private val firestoreManager = FirebaseAuthManager()
+     val firestoreManager = FirebaseAuthManager()
 
 
     var callLogs by mutableStateOf(listOf<CallLogModel>())
@@ -75,7 +75,7 @@ class AppUsageViewModel(application: Application) : AndroidViewModel(application
                     else->CallType.UNKNOWN
                 }
 
-                callLogList.add(CallLogModel("Unknown", number, callType, date, duration))
+                callLogList.add(CallLogModel("Unknown", number, callType.toString(), date, duration))
             }
         }
         callLogs = callLogList
@@ -161,53 +161,7 @@ class AppUsageViewModel(application: Application) : AndroidViewModel(application
 
     private val iconCache = LruCache<String, Drawable>(100)
 
-    fun getCallLogs(context: Context): List<CallLogModel> {
-        val callLogs = mutableListOf<CallLogModel>()
 
-        try {
-            val cursor = context.contentResolver.query(
-                CallLog.Calls.CONTENT_URI, null, null, null, CallLog.Calls.DATE + " DESC"
-            )
-
-            cursor?.use {
-                val numberIndex = it.getColumnIndex(CallLog.Calls.NUMBER)
-                val typeIndex = it.getColumnIndex(CallLog.Calls.TYPE)
-                val dateIndex = it.getColumnIndex(CallLog.Calls.DATE)
-                val durationIndex = it.getColumnIndex(CallLog.Calls.DURATION)
-                val name = it.getColumnIndex(CallLog.Calls.CACHED_NAME)
-
-                while (it.moveToNext()) {
-                    val phoneNumber = it.getString(numberIndex)
-                    val callType = it.getInt(typeIndex)
-                    val callDate = it.getLong(dateIndex)
-                    val callDuration = it.getString(durationIndex)
-                    val userName = it.getString(name)
-
-                    val callDayTime = Date(callDate)
-                    val callDirection = when (callType) {
-                        CallLog.Calls.OUTGOING_TYPE -> CallType.MADE
-                        CallLog.Calls.INCOMING_TYPE -> CallType.RECEIVED
-                        CallLog.Calls.MISSED_TYPE -> CallType.MISSED
-                        else -> CallType.UNKNOWN
-                    }
-
-                    callLogs.add(
-                        CallLogModel(
-                            name = userName?:"Unknown",
-                            number = phoneNumber,
-                            type = callDirection,
-                            duration = callDuration,
-                            date  = callDate.toString()
-                        )
-                    )
-//                callLogs.add("📞 Number: $phoneNumber\n📅 Date: $callDayTime\n🔹 Type: $callDirection\n⏳ Duration: $callDuration sec \n $name")
-                }
-            }
-        } catch (e: SecurityException) {
-            Log.e("CallLogError", "Permission not granted: ${e.message}")
-        }
-        return callLogs
-    }
 
     fun getAppUsageStats(context: Context, startTime: Long, endTime: Long): List<AppUsageInfo> {
         val usageStatsManager =
@@ -286,7 +240,7 @@ class AppUsageViewModel(application: Application) : AndroidViewModel(application
 data class CallLogModel(
     val name: String,
     val number: String,
-    val type: CallType,
+    val type: String,
     val date: String,
     val duration: String
 )
