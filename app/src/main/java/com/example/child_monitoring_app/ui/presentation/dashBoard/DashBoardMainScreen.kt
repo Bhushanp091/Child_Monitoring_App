@@ -202,6 +202,7 @@ fun DashBoardMainScreen(
 
 @Composable
 fun FeatureCard(feature: MonitoringFeature, onClick: (MonitoringFeature) -> Unit) {
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
