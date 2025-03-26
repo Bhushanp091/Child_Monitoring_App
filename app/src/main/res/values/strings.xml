@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">Child_Monitoring_App</string>
+    <string name="accessibility_service_desc">This service helps monitor browser history.</string>
 </resources>
