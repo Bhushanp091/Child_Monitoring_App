@@ -3,6 +3,9 @@ package com.example.child_monitoring_app.ui.presentation.browser
 import android.accessibilityservice.AccessibilityService
 import android.view.accessibility.AccessibilityEvent
 import android.util.Log
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 class BrowserAccessibilityService : AccessibilityService() {
 
@@ -12,16 +15,19 @@ class BrowserAccessibilityService : AccessibilityService() {
     }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
-        Log.d("BrowserService", "Event Received: ${event?.eventType}")
+        if (event == null) return
 
-        event?.let {
-            if (event.eventType == AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED) {
-                val packageName = event.packageName?.toString() ?: return
-                Log.d("BrowserService", "Detected Package: $packageName")
+        val packageName = event.packageName?.toString() ?: return
+        if (packageName.contains("chrome") || packageName.contains("firefox") || packageName.contains("browser")) {
+            event.source?.let { nodeInfo ->
+                val text = nodeInfo.text?.toString()
+                if (!text.isNullOrEmpty() && text.startsWith("http")) {
+                    Log.d("BrowserService", "Visited URL: $text")
 
-                if (packageName.contains("chrome") || packageName.contains("browser")) {
-                    val url = event.text.toString()
-                    Log.d("BrowserService", "Visited URL: $url")
+                    // Store the detected URL in Repository
+                    CoroutineScope(Dispatchers.IO).launch {
+                        BrowserHistoryRepository.addBrowserHistory(text, System.currentTimeMillis().toString())
+                    }
                 }
             }
         }

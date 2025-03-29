@@ -63,6 +63,8 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+    implementation ("androidx.compose.material3:material3:1.1.2")
+
 
     implementation("network.chaintech:sdp-ssp-compose-multiplatform:1.0.5")
     implementation ("androidx.navigation:navigation-compose:2.8.8")

@@ -15,9 +15,9 @@ import com.example.child_monitoring_app.ui.presentation.appUsage.AppUsageViewMod
 import com.example.child_monitoring_app.ui.presentation.appUsage.CallLogHistoryScreen
 import com.example.child_monitoring_app.ui.presentation.appUsage.PhoneNumberList
 import com.example.child_monitoring_app.ui.presentation.browser.BrowserHistoryScreen
+import com.example.child_monitoring_app.ui.presentation.browser.BrowserHistoryViewModel
 import com.example.child_monitoring_app.ui.presentation.dashBoard.ChildDashBoardScreen
 import com.example.child_monitoring_app.ui.presentation.dashBoard.DashBoardMainScreen
-import com.example.child_monitoring_app.ui.presentation.dashBoard.GetUserScreen
 import com.example.child_monitoring_app.ui.presentation.location.ShowLocationScreen
 import com.example.child_monitoring_app.ui.presentation.login.AuthViewModel
 import com.example.child_monitoring_app.ui.presentation.login.ParentChildSelectionScreen
@@ -35,20 +35,16 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-
 @Composable
 fun Navigation() {
-
-
     val navController = rememberNavController()
     val appUsageViewModel: AppUsageViewModel = viewModel()
     val authViewModel: AuthViewModel = viewModel()
-
-
+    val browserHistoryViewModel: BrowserHistoryViewModel = viewModel()
 
     NavHost(
         navController = navController,
-        startDestination = Screen.PreLogin.route
+        startDestination = Screen.PreLogin.route // Ensure login is the first screen
     ) {
 
         composable(Screen.PreLogin.route) {
@@ -56,19 +52,19 @@ fun Navigation() {
         }
 
         composable(Screen.SignUp.route) {
-            ParentSignupScreen(authViewModel,navController)
+            ParentSignupScreen(authViewModel, navController)
         }
 
         composable(Screen.ChildLogin.route) {
-            ChildLoginScreen(authViewModel,navController)
+            ChildLoginScreen(authViewModel, navController)
         }
 
         composable(Screen.ParentLogin.route) {
-            ParentLoginScreen(authViewModel,navController)
+            ParentLoginScreen(authViewModel, navController)
         }
 
         composable(Screen.DashBoard.route) {
-            DashBoardMainScreen(appUsageViewModel,authViewModel,navController)
+            DashBoardMainScreen(appUsageViewModel, authViewModel, navController)
         }
 
         composable(Screen.AddChild.route) {
@@ -85,10 +81,8 @@ fun Navigation() {
         }
 
         composable(Screen.CallHistory.route) {
-            CallLogHistoryScreen(appUsageViewModel){}
+            CallLogHistoryScreen(appUsageViewModel) {}
         }
-
-
 
         composable(Screen.LocationScreen.route) {
             ShowLocationScreen()
@@ -103,16 +97,10 @@ fun Navigation() {
         }
 
         composable(Screen.BrowserHistory.route) {
-            BrowserHistoryScreen()
+            BrowserHistoryScreen(browserHistoryViewModel)
         }
-
-
-
     }
-
-
 }
-
 
 sealed class Screen(val route: String) {
     object DashBoard : Screen("dash_board")
@@ -121,10 +109,10 @@ sealed class Screen(val route: String) {
     object AppUsage : Screen("app_usage")
     object ParentLogin : Screen("login")
     object SignUp : Screen("sign_up")
-    object PreLogin : Screen("pre_login")
+    object PreLogin : Screen("pre_login") // App now starts from login screen
     object ChildLogin : Screen("child_login")
     object AddChild : Screen("add_Child")
-    object LocationScreen:Screen("show_location")
-    object PhoneNumberList:Screen("phone_number_list")
-    object BrowserHistory:Screen("browser_history_list")
+    object LocationScreen : Screen("show_location")
+    object PhoneNumberList : Screen("phone_number_list")
+    object BrowserHistory : Screen("browser_history_list")
 }
