@@ -2,9 +2,12 @@
 <accessibility-service
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:description="@string/accessibility_service_desc"
-    android:packageNames="com.android.chrome,org.mozilla.firefox,com.opera.browser"
+    android:packageNames="com.android.chrome,org.mozilla.firefox,com.opera.browser,com.microsoft.edge"
     android:accessibilityEventTypes="typeWindowContentChanged|typeViewTextChanged|typeWindowStateChanged"
     android:accessibilityFlags="flagDefault|flagRetrieveInteractiveWindows"
     android:notificationTimeout="100"
     android:canRetrieveWindowContent="true"
-    android:accessibilityFeedbackType="feedbackGeneric"/>
+    android:accessibilityFeedbackType="feedbackGeneric"
+    android:settingsActivity="com.example.child_monitoring_app.ui.presentation.settings.AccessibilitySettingsActivity"/>
+
+
