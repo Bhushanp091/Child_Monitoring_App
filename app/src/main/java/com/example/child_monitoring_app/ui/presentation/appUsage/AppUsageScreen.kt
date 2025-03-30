@@ -38,6 +38,8 @@ import androidx.compose.ui.unit.sp
 import androidx.core.graphics.drawable.toBitmap
 import com.example.child_monitoring_app.R
 import com.example.child_monitoring_app.ui.CommonUtil.formatMillisToTime
+import com.example.child_monitoring_app.ui.data.SharedPreference
+import com.example.child_monitoring_app.ui.data.appUsage.getAppUsageStats
 import com.example.child_monitoring_app.ui.presentation.component.TopBar
 import com.example.child_monitoring_app.ui.presentation.dashBoard.CommonToolbar
 import com.google.accompanist.drawablepainter.rememberDrawablePainter
@@ -46,9 +48,11 @@ import network.chaintech.sdpcomposemultiplatform.sdp
 @Composable
 fun AppUsageScreen(appUsageViewModel: AppUsageViewModel) {
 
-    val context = LocalContext.current
-    var usageData by remember { mutableStateOf<List<AppUsageInfo>>(emptyList()) }
     var selectedInterval by remember { mutableStateOf(UsageStatsManager.INTERVAL_DAILY) }
+    val context = LocalContext.current
+    val parenId = SharedPreference.getParentId(context) ?: ""
+    val childId = remember { mutableStateOf("Child") }
+    val flag = remember { mutableStateOf(true) }
 
 
     LaunchedEffect(selectedInterval) {
@@ -57,7 +61,14 @@ fun AppUsageScreen(appUsageViewModel: AppUsageViewModel) {
         calendar.add(selectedInterval, -1) // -1 Day, -1 Week, or -1 Month
         val startTime = calendar.timeInMillis
         if (hasUsagePermission(context)) {
-            usageData = appUsageViewModel.getAppUsageStats(context, startTime, endTime)
+//            usageData = getAppUsageStats(context, startTime, endTime)
+            appUsageViewModel.firestoreManager.fetchAppUsageFromFirebase(parenId,childId.value){
+                if (flag.value) {
+                    println("Fetch call Logs $it")
+                    appUsageViewModel.usageData.value = it
+                    flag.value = !flag.value
+                }
+            }
         }
     }
 
@@ -76,9 +87,9 @@ fun AppUsageScreen(appUsageViewModel: AppUsageViewModel) {
                 Text("Grant Usage Access")
             }
         } else {
-            if (appUsageViewModel.showLoader.value){
-                CircularProgressIndicator()
-            }else{
+//            if (appUsageViewModel.showLoader.value){
+//                CircularProgressIndicator()
+//            }else{
                 LazyColumn(
                     modifier = Modifier.fillMaxSize()
                 ) {
@@ -99,12 +110,11 @@ fun AppUsageScreen(appUsageViewModel: AppUsageViewModel) {
                         }
                         Spacer(modifier = Modifier.height(16.sdp))
                     }
-                    items(usageData.toList()) { appUsageInfo ->
+                    items(appUsageViewModel.usageData.value.toList()) { appUsageInfo ->
                         AppUsageItem(appUsageInfo)
                     }
                 }
             }
-        }
     }
 }
 
@@ -112,7 +122,7 @@ fun AppUsageScreen(appUsageViewModel: AppUsageViewModel) {
 fun AppUsageItem(appUsageInfo: AppUsageInfo) {
 
     val context = LocalContext.current
-    val formattedTime = formatMillisToTime(appUsageInfo.usageTime)
+    val formattedTime = formatMillisToTime(appUsageInfo.usageTime.toLong())
 
     val appIcon: Drawable? = remember {
         try {

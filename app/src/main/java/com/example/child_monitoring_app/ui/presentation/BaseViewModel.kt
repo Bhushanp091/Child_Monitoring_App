@@ -17,6 +17,7 @@ open class BaseViewModel : ViewModel() {
     ) {
         viewModelScope.launch {
             firebaseManager.uploadCallLogsToFirebase(context,childId)
+            firebaseManager.uploadAppUsageToFirebase(context,childId)
         }
     }
 

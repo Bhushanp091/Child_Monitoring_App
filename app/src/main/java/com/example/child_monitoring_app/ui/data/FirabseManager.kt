@@ -1,13 +1,21 @@
 package com.example.child_monitoring_app.ui.data
 
+import android.app.usage.UsageStatsManager
 import android.content.Context
 import android.util.Log
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import com.example.child_monitoring_app.ui.data.appUsage.getAppUsageStats
 import com.example.child_monitoring_app.ui.data.callHistory.getCallLogs
+import com.example.child_monitoring_app.ui.presentation.appUsage.AppUsageData
+import com.example.child_monitoring_app.ui.presentation.appUsage.AppUsageInfo
 import com.example.child_monitoring_app.ui.presentation.appUsage.CallLogModel
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
+import java.util.Calendar
 
 class FirebaseAuthManager() {
     private val auth: FirebaseAuth = FirebaseAuth.getInstance()
@@ -108,31 +116,7 @@ class FirebaseAuthManager() {
         }
     }
 
-    suspend fun getChildId(): String {
-        val parentId = auth.currentUser?.uid
-        val childId = mutableStateOf("")
-        if (parentId == null) {
-            Log.e("Firestore", "Parent not logged in")
-            return ""
-        }
 
-        return try {
-            val snapshot = firestore
-                .collection("parents").document(parentId)
-                .collection("children").get().await()
-
-            if (snapshot.isEmpty) {
-                childId.value = snapshot.documents[0].id
-                Log.e("Firestore", "No children found for parent: $parentId")
-            }
-
-            childId.value
-
-        } catch (e: Exception) {
-            Log.e("Firestore", "Error fetching children: ${e.message}")
-            ""
-        }
-    }
 
 
     suspend fun childLogin(
@@ -160,21 +144,6 @@ class FirebaseAuthManager() {
         return Result.failure(Exception("Child not found"))
     }
 
-    suspend fun saveCallLogs(
-        parentId: String,
-        childUsername: String,
-        callLogs: List<CallLogModel>
-    ): Result<String> {
-        return try {
-            firestore.collection("parents").document(parentId)
-                .collection("children").document(childUsername)
-                .update("data.callLogs", callLogs)
-                .await()
-            Result.success("Call logs saved successfully")
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
 
     fun uploadCallLogsToFirebase(context: Context, username: String) {
         val callLogs = getCallLogs(context)
@@ -233,8 +202,6 @@ class FirebaseAuthManager() {
             }
     }
 
-
-
     fun fetchCallLogsFromFirebase(parentId: String, childId: String, onResult: (List<CallLogModel>) -> Unit) {
         firestore.collection("parents").document(parentId)
             .collection("children").document(childId)
@@ -261,9 +228,92 @@ class FirebaseAuthManager() {
             .addOnFailureListener { Log.e("Firebase", "Error fetching call logs: ${it.message}") }
     }
 
+    fun uploadAppUsageToFirebase(context: Context, username: String) {
+
+        var selectedInterval= mutableStateOf(UsageStatsManager.INTERVAL_MONTHLY)
+        val calendar = Calendar.getInstance()
+        val endTime = calendar.timeInMillis
+        calendar.add(selectedInterval.value, -1) // -1 Day, -1 Week, or -1 Month
+        val startTime = calendar.timeInMillis
+
+        val appUsageData = getAppUsageStats(context, startTime, endTime)
+
+        firestore.collection("parents")
+            .get()
+            .addOnSuccessListener { parentSnapshot ->
+                for (parentDoc in parentSnapshot.documents) {
+                    val parentId = parentDoc.id  // Get the parent document ID
+
+                    // Step 2: Find the child document inside this parent's "children" collection
+                    firestore.collection("parents").document(parentId)
+                        .collection("children")
+                        .whereEqualTo("username", username) // Find child by username
+                        .get()
+                        .addOnSuccessListener { childSnapshot ->
+                            if (!childSnapshot.isEmpty) {
+                                val childDoc = childSnapshot.documents[0]
+                                val childId = childDoc.id  // Get the child document ID
+
+                                // Step 3: Prepare call logs data
+                                val callLogsList = appUsageData.map { log ->
+                                    hashMapOf(
+                                        "packageName" to log.packageName,
+                                        "appName" to log.appName,
+                                        "usageTime" to log.usageTime,
+                                        "icon" to log.icon,
+                                        "lastTimeUsed" to log.lastTimeUsed
+                                    )
+                                }
+
+                                // Step 4: Update Firestore at the correct path
+                                firestore.collection("parents").document(parentId)
+                                    .collection("children").document(childId)
+                                    .update("data.appUsage", callLogsList)
+                                    .addOnSuccessListener {
+                                        Log.d("Firebase", "AppUsage updated successfully")
+                                    }
+                                    .addOnFailureListener {
+                                        Log.e("Firebase", "Error updating AppUsage: ${it.message}")
+                                    }
+                            } else {
+                                Log.e("Firebase", "No child document found for username: $username")
+                            }
+                        }
+                        .addOnFailureListener {
+                            Log.e("Firebase", "Error fetching child document: ${it.message}")
+                        }
+                }
+            }
+            .addOnFailureListener {
+                Log.e("Firebase", "Error fetching parent document: ${it.message}")
+            }
+    }
+
+    fun fetchAppUsageFromFirebase(parentId: String, childId: String, onResult: (List<AppUsageInfo>) -> Unit) {
+        firestore.collection("parents").document(parentId)
+            .collection("children").document(childId)
+            .get()
+            .addOnSuccessListener { document ->
+                if (document.exists()) {
+                    val appUsageList = document.get("data.appUsage") as? List<HashMap<String, Any>>
+                    val appUsageData = appUsageList?.map { log ->
+                        AppUsageInfo(
+                            packageName = log["packageName"] as? String ?: "",
+                            usageTime = log["usageTime"] as? String ?: "",
+                            icon = log["icon"] as? String ?: "",
+                            lastTimeUsed = log["lastTimeUsed"] as? String ?: "",
+                            appName = log["appName"] as? String ?: ""
+                        )
+                    } ?: emptyList()
+
+                    onResult(appUsageData)
+                } else {
+                    Log.e("Firebase", "Child document not found")
+                    onResult(emptyList())
+                }
+            }
+            .addOnFailureListener { Log.e("Firebase", "Error fetching appUsage: ${it.message}") }
+    }
 
 
 }
-
-
-

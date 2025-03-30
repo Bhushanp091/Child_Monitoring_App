@@ -13,6 +13,7 @@ import android.util.Log
 import android.util.LruCache
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.core.app.ActivityCompat
 import androidx.lifecycle.AndroidViewModel
@@ -36,6 +37,8 @@ class AppUsageViewModel(application: Application) : AndroidViewModel(application
 
     var callLogs by mutableStateOf(listOf<CallLogModel>())
         private set
+
+    var usageData = mutableStateOf<List<AppUsageInfo>>(emptyList())
 
 
     fun fetchCallLogs(context: Context) {
@@ -143,96 +146,10 @@ class AppUsageViewModel(application: Application) : AndroidViewModel(application
 
 
 
-//
-//    suspend fun saveCallLogs(userId: String, callLogs: List<CallLogModel>): Result<String> {
-//        return withContext(Dispatchers.IO) {
-//            firestoreManager.saveCallLogs(userId, callLogs)
-//        }
-//    }
-//
-//    suspend fun getCallLogs(userId: String): Result<List<CallLogModel>> {
-//        return withContext(Dispatchers.IO) {
-//            firestoreManager.getCallLogs(userId)
-//        }
-//    }
-
-
-    val showLoader = mutableStateOf(false)
-
-    private val iconCache = LruCache<String, Drawable>(100)
 
 
 
-    fun getAppUsageStats(context: Context, startTime: Long, endTime: Long): List<AppUsageInfo> {
-        val usageStatsManager =
-            context.getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
-        val usageEvents = usageStatsManager.queryEvents(startTime, endTime)
-        val packageManager = context.packageManager
 
-        // Track both usage time and last used timestamp
-        data class UsageData(var totalTime: Long = 0L, var lastUsed: Long = 0L)
-
-        val appUsageMap = mutableMapOf<String, UsageData>()
-
-        var lastForegroundTime = 0L
-        var lastPackageName: String? = null
-
-        val event = UsageEvents.Event()
-        while (usageEvents.hasNextEvent()) {
-            usageEvents.getNextEvent(event)
-
-            when (event.eventType) {
-                UsageEvents.Event.MOVE_TO_FOREGROUND -> {
-                    lastForegroundTime = event.timeStamp
-                    lastPackageName = event.packageName
-                }
-
-                UsageEvents.Event.MOVE_TO_BACKGROUND -> {
-                    if (lastPackageName != null && lastForegroundTime > 0) {
-                        val usageTime = event.timeStamp - lastForegroundTime
-                        val usageData = appUsageMap.getOrDefault(lastPackageName, UsageData())
-                        usageData.totalTime += usageTime
-                        usageData.lastUsed = event.timeStamp
-                        appUsageMap[lastPackageName!!] = usageData
-
-                        lastForegroundTime = 0L
-                        lastPackageName = null
-                    }
-                }
-            }
-        }
-        return appUsageMap.map { (packageName, usageData) ->
-            // First try to get icon from cache
-            var icon = iconCache.get(packageName)
-
-            if (icon == null) {
-                icon = try {
-                    packageManager.getApplicationIcon(packageName).also {
-                        // Store in cache for future use
-                        iconCache.put(packageName, it)
-                    }
-                } catch (e: PackageManager.NameNotFoundException) {
-                    null
-                }
-            }
-
-            val appName = try {
-                val appInfo = packageManager.getApplicationInfo(packageName, 0)
-                // Load label using the ApplicationInfo object
-                packageManager.getApplicationLabel(appInfo).toString()
-            } catch (e: PackageManager.NameNotFoundException) {
-                packageName // Fallback to package name
-            }
-
-            AppUsageInfo(
-                packageName = packageName,
-                appName = appName,
-                usageTime = usageData.totalTime,
-                icon = icon,
-                lastTimeUsed = usageData.lastUsed
-            )
-        }.sortedByDescending { it.lastTimeUsed }
-    }
 
 }
 
@@ -253,7 +170,7 @@ enum class CallType{
 data class AppUsageInfo(
     val packageName: String,
     val appName: String,
-    val usageTime: Long,
-    val icon: Drawable?,
-    val lastTimeUsed: Long = 0L
+    val usageTime: String,
+    val icon: String?,
+    val lastTimeUsed: String = ""
 )
