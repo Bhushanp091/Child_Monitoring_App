@@ -40,7 +40,9 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun ChildListScreen(
-    authViewModel: AuthViewModel
+    authViewModel: AuthViewModel,
+    modifier: Modifier,
+    onClickNavigate: () -> Unit
 ) {
     var children by remember { mutableStateOf<List<ChildData>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
@@ -51,61 +53,51 @@ fun ChildListScreen(
     LaunchedEffect(Unit) {
         coroutineScope.launch {
             try {
-               children =  authViewModel.getChildList()
+                children = authViewModel.getChildList()
                 println("Child List $children")
                 isLoading = false
             } catch (e: Exception) {
-                errorMessage = e.message?:"Error Occurred"
+                errorMessage = e.message ?: "Error Occurred"
                 isLoading = false
             }
         }
     }
 
-    if (isLoading) {
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            CircularProgressIndicator()
+    Column (
+        modifier = modifier.fillMaxSize()
+    ) {
+        if (isLoading) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
+            }
+        } else {
+            Text(
+                text = "My Children",
+                style = MaterialTheme.typography.titleLarge.copy(
+                    fontWeight = FontWeight.SemiBold
+                ),
+                modifier = Modifier.padding(bottom = 12.dp)
+            )
+
+            children.forEach { it ->
+                ChildProfileCard(it) { childId ->
+                    authViewModel.childId.value = childId
+                    onClickNavigate()
+                }
+            }
         }
-    } else {
-        Text(
-            text = "My Children",
-            style = MaterialTheme.typography.titleLarge.copy(
-                fontWeight = FontWeight.SemiBold
-            ),
-            modifier = Modifier.padding(bottom = 12.dp)
-        )
-
-        children.forEach{
-            ChildProfileCard(it)
-
-        }
-//        LazyColumn {
-//            items(children) { child ->
-
-
-//                println("Child Data $child")
-//                Card (
-//                    modifier = Modifier
-//                        .padding(8.dp)
-//                        .fillMaxWidth(),
-//                    shape = RoundedCornerShape(10.dp)
-//                ) {
-//                    Column (modifier = Modifier.padding(16.dp)) {
-//                        Text(text = "Name: ${child.name}", )
-//                        Text(text = "Username: ${child.username}",)
-//                        Text(text = "Age: ${child.age}",)
-//                    }
-//                }
-//            }
-//        }
     }
 }
 
 @Composable
-fun ChildProfileCard(childData: ChildData) {
+fun ChildProfileCard(
+    childData: ChildData,
+    onClick: (String) -> Unit
+) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { /* Navigate to child details */ }
+            .clickable { onClick(childData.username) }
             .padding(8.dp),
         elevation = CardDefaults.cardElevation(4.dp),
         shape = RoundedCornerShape(16.dp)

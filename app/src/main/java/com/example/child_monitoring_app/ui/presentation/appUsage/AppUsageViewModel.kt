@@ -41,6 +41,7 @@ class AppUsageViewModel(application: Application) : AndroidViewModel(application
     var usageData = mutableStateOf<List<AppUsageInfo>>(emptyList())
 
 
+
     fun fetchCallLogs(context: Context) {
         if (ActivityCompat.checkSelfPermission(context, Manifest.permission.READ_CALL_LOG)
             != PackageManager.PERMISSION_GRANTED

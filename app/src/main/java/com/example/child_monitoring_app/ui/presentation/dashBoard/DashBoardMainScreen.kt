@@ -5,11 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material3.Button
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -31,62 +27,6 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.child_monitoring_app.ui.presentation.appUsage.AppUsageViewModel
-import com.example.child_monitoring_app.ui.presentation.component.CommonTopBar
-
-@Composable
-fun DashBoardMainScreenOld(
-    authViewModel: AuthViewModel,
-    navController: NavController
-) {
-    Scaffold(
-        topBar = { CommonTopBar("DashBoard") },
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = { navController.navigate(Screen.AddChild.route) }
-            ) {
-                Icon(Icons.Default.Add, "")
-            }
-        },
-        modifier = Modifier.fillMaxSize()
-    ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-
-            Button(
-                onClick = {
-                    navController.navigate(Screen.CallHistory.route)
-                }
-            ) {
-                Text("Navigate To CallHistory")
-            }
-
-            Button(
-                onClick = {
-                    navController.navigate(Screen.AppUsage.route)
-                }
-            ) {
-                Text("Navigate To AppUsage")
-            }
-
-            Button(
-                onClick = {
-                    navController.navigate(Screen.ChildDashBoard.route)
-                }
-            ) {
-                Text("Navigate To Show Child Data")
-            }
-
-            ChildListScreen(authViewModel)
-
-        }
-
-    }
-}
 
 
 // Feature Model
@@ -96,7 +36,6 @@ data class MonitoringFeature(
     val route: String
 )
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DashBoardMainScreen(
     modifier: Modifier,
@@ -105,7 +44,6 @@ fun DashBoardMainScreen(
     navController: NavController
 ) {
 
-
     val features = listOf(
         MonitoringFeature(Icons.Default.PlayArrow, "App Usage", Screen.AppUsage.route),
         MonitoringFeature(Icons.Default.Call, "Call History", Screen.CallHistory.route),
@@ -113,7 +51,6 @@ fun DashBoardMainScreen(
         MonitoringFeature(Icons.Default.PlayArrow, "Browser Details", Screen.BrowserHistory.route),
         MonitoringFeature(Icons.Default.LocationOn, "Location", Screen.LocationScreen.route)
     )
-
 
     Box(
         modifier = modifier
@@ -132,7 +69,6 @@ fun DashBoardMainScreen(
                 .fillMaxSize()
                 .padding(16.dp)
         ) {
-            ChildListScreen(authViewModel)
             Text(
                 text = "Monitoring Features",
                 style = MaterialTheme.typography.titleLarge.copy(

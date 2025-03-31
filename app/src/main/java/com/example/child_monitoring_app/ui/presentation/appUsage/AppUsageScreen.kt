@@ -32,16 +32,20 @@ import androidx.compose.ui.res.painterResource
 import com.example.child_monitoring_app.R
 import com.example.child_monitoring_app.ui.CommonUtil.formatMillisToTime
 import com.example.child_monitoring_app.ui.data.SharedPreference
+import com.example.child_monitoring_app.ui.presentation.login.AuthViewModel
 import com.google.accompanist.drawablepainter.rememberDrawablePainter
 import network.chaintech.sdpcomposemultiplatform.sdp
 
 @Composable
-fun AppUsageScreen(appUsageViewModel: AppUsageViewModel,modifier: Modifier) {
+fun AppUsageScreen(
+    appUsageViewModel: AppUsageViewModel,
+    authViewModel: AuthViewModel,
+    modifier: Modifier
+) {
 
     var selectedInterval by remember { mutableStateOf(UsageStatsManager.INTERVAL_DAILY) }
     val context = LocalContext.current
     val parenId = SharedPreference.getParentId(context) ?: ""
-    val childId = remember { mutableStateOf("Child") }
     val flag = remember { mutableStateOf(true) }
 
 
@@ -52,7 +56,10 @@ fun AppUsageScreen(appUsageViewModel: AppUsageViewModel,modifier: Modifier) {
         val startTime = calendar.timeInMillis
         if (hasUsagePermission(context)) {
 //            usageData = getAppUsageStats(context, startTime, endTime)
-            appUsageViewModel.firestoreManager.fetchAppUsageFromFirebase(parenId,childId.value){
+            appUsageViewModel.firestoreManager.fetchAppUsageFromFirebase(
+                parenId,
+                authViewModel.childId.value
+            ) {
                 if (flag.value) {
                     println("Fetch call Logs $it")
                     appUsageViewModel.usageData.value = it
@@ -79,31 +86,31 @@ fun AppUsageScreen(appUsageViewModel: AppUsageViewModel,modifier: Modifier) {
 //            if (appUsageViewModel.showLoader.value){
 //                CircularProgressIndicator()
 //            }else{
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize()
-                ) {
-                    item {
-                        Spacer(modifier = Modifier.height(10.sdp))
-                        Row {
-                            Button(onClick = { selectedInterval = Calendar.DAY_OF_MONTH }) {
-                                Text("Daily")
-                            }
-                            Spacer(modifier = Modifier.width(8.sdp))
-                            Button(onClick = { selectedInterval = Calendar.WEEK_OF_YEAR }) {
-                                Text("Weekly")
-                            }
-                            Spacer(modifier = Modifier.width(8.sdp))
-                            Button(onClick = { selectedInterval = Calendar.MONTH }) {
-                                Text("Monthly")
-                            }
+            LazyColumn(
+                modifier = Modifier.fillMaxSize()
+            ) {
+                item {
+                    Spacer(modifier = Modifier.height(10.sdp))
+                    Row {
+                        Button(onClick = { selectedInterval = Calendar.DAY_OF_MONTH }) {
+                            Text("Daily")
                         }
-                        Spacer(modifier = Modifier.height(16.sdp))
+                        Spacer(modifier = Modifier.width(8.sdp))
+                        Button(onClick = { selectedInterval = Calendar.WEEK_OF_YEAR }) {
+                            Text("Weekly")
+                        }
+                        Spacer(modifier = Modifier.width(8.sdp))
+                        Button(onClick = { selectedInterval = Calendar.MONTH }) {
+                            Text("Monthly")
+                        }
                     }
-                    items(appUsageViewModel.usageData.value.toList()) { appUsageInfo ->
-                        AppUsageItem(appUsageInfo)
-                    }
+                    Spacer(modifier = Modifier.height(16.sdp))
+                }
+                items(appUsageViewModel.usageData.value.toList()) { appUsageInfo ->
+                    AppUsageItem(appUsageInfo)
                 }
             }
+        }
     }
 }
 

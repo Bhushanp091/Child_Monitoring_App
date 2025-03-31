@@ -20,20 +20,24 @@ import androidx.compose.ui.text.font.FontWeight
 import com.example.child_monitoring_app.R
 import com.example.child_monitoring_app.ui.CommonUtil
 import com.example.child_monitoring_app.ui.data.SharedPreference
-import com.example.child_monitoring_app.ui.presentation.dashBoard.CommonToolbar
+import com.example.child_monitoring_app.ui.presentation.component.CommonToolbar
+import com.example.child_monitoring_app.ui.presentation.login.AuthViewModel
 import network.chaintech.sdpcomposemultiplatform.sdp
 import network.chaintech.sdpcomposemultiplatform.ssp
 
 
 @Composable
-fun ShowChildCallHistory(appUsageViewModel: AppUsageViewModel, modifier: Modifier) {
+fun ShowChildCallHistory(
+    appUsageViewModel: AppUsageViewModel,
+    authViewModel: AuthViewModel,
+    modifier: Modifier
+) {
     val context = LocalContext.current
     val parenId = SharedPreference.getParentId(context) ?: ""
-    val childId = remember { mutableStateOf("Child") }
     val flag = remember { mutableStateOf(true) }
 
     LaunchedEffect(Unit) {
-        appUsageViewModel.firestoreManager.fetchCallLogsFromFirebase(parenId, childId.value) {
+        appUsageViewModel.firestoreManager.fetchCallLogsFromFirebase(parenId,authViewModel.childId.value) {
             if (flag.value) {
                 println("Fetch call Logs $it")
                 appUsageViewModel.callLogsMain.value = it
@@ -46,10 +50,6 @@ fun ShowChildCallHistory(appUsageViewModel: AppUsageViewModel, modifier: Modifie
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        CommonToolbar(
-            title = "CallLog History",
-            onBackClick = {}
-        )
         LazyColumn(
             modifier = Modifier
         ) {

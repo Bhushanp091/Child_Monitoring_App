@@ -19,6 +19,7 @@ import com.example.child_monitoring_app.ui.presentation.appUsage.ShowChildCallHi
 import com.example.child_monitoring_app.ui.presentation.browser.BrowserHistoryScreen
 import com.example.child_monitoring_app.ui.presentation.component.MainScaffold
 import com.example.child_monitoring_app.ui.presentation.dashBoard.ChildDashBoardScreen
+import com.example.child_monitoring_app.ui.presentation.dashBoard.ChildListScreen
 import com.example.child_monitoring_app.ui.presentation.dashBoard.DashBoardMainScreen
 import com.example.child_monitoring_app.ui.presentation.location.ShowLocationScreen
 import com.example.child_monitoring_app.ui.presentation.login.AuthViewModel
@@ -77,7 +78,7 @@ fun Navigation() {
         }
 
         composable(Screen.DashBoard.route) {
-            MainScaffold(navController, "DashBoard", showFloatingButton = true, showTopBar = false) {
+            MainScaffold(navController, "DashBoard", showFloatingButton = true, showBackButton = false) {
                 DashBoardMainScreen(Modifier.padding(it),appUsageViewModel, authViewModel, navController)
             }
         }
@@ -89,10 +90,10 @@ fun Navigation() {
         }
 
         composable(Screen.AppUsage.route) {
-            MainScaffold(navController, "Add Child") {
+            MainScaffold(navController, "App Usage") {
                 val hasPermission = appUsageViewModel.hasPermission
                 if (hasPermission) {
-                    AppUsageScreen(appUsageViewModel,Modifier.padding(it))
+                    AppUsageScreen(appUsageViewModel,authViewModel,Modifier.padding(it))
                 } else {
                     appUsageViewModel.requestPermission()
                 }
@@ -100,8 +101,16 @@ fun Navigation() {
         }
 
         composable(Screen.CallHistory.route) {
-            MainScaffold(navController, "Sign Up") {
-                ShowChildCallHistory(appUsageViewModel,Modifier.padding(it))
+            MainScaffold(navController, "Call Log History") {
+                ShowChildCallHistory(appUsageViewModel,authViewModel,Modifier.padding(it))
+            }
+        }
+
+        composable(Screen.ShowChildList.route) {
+            MainScaffold(navController, "Child List", showFloatingButton = true, showBackButton = false) {
+                ChildListScreen(authViewModel,Modifier.padding(it)) {
+                    navController.navigate(Screen.DashBoard.route)
+                }
             }
         }
 
@@ -136,6 +145,7 @@ sealed class Screen(val route: String) {
     object PreLogin : Screen("pre_login")
     object ChildLogin : Screen("child_login")
     object AddChild : Screen("add_Child")
+    object ShowChildList : Screen("show_child_list")
     object LocationScreen : Screen("show_location")
     object PhoneNumberList : Screen("phone_number_list")
     object BrowserHistory : Screen("browser_history_list")

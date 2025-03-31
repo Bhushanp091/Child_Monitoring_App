@@ -8,7 +8,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import com.example.child_monitoring_app.ui.data.FirebaseAuthManager
 import com.example.child_monitoring_app.ui.data.SharedPreference
 import com.example.child_monitoring_app.ui.presentation.component.CommonButton
 import com.example.child_monitoring_app.ui.presentation.login.AuthViewModel

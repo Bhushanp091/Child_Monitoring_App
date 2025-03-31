@@ -391,9 +391,8 @@ fun ImagePickerScreen(onImageSelected: (Uri) -> Unit) {
                     Image(
                         painter = rememberAsyncImagePainter(it),
                         contentDescription = "Selected Image",
-                        modifier = Modifier
-                            .border(2.dp, Color.Gray, CircleShape),
-                        contentScale = ContentScale.Fit
+                        modifier = Modifier,
+                        contentScale = ContentScale.FillBounds
                     )
                 }
             } else {
