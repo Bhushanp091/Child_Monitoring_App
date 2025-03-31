@@ -16,35 +16,22 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavController
 import com.example.child_monitoring_app.Screen
-import com.example.child_monitoring_app.ui.presentation.component.TopBar
 import com.example.child_monitoring_app.ui.presentation.login.AuthViewModel
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.*
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.example.child_monitoring_app.R
-import com.example.child_monitoring_app.ui.data.ChildData
 import com.example.child_monitoring_app.ui.presentation.appUsage.AppUsageViewModel
+import com.example.child_monitoring_app.ui.presentation.component.CommonTopBar
 
 @Composable
 fun DashBoardMainScreenOld(
@@ -52,7 +39,7 @@ fun DashBoardMainScreenOld(
     navController: NavController
 ) {
     Scaffold(
-        topBar = { TopBar("DashBoard") },
+        topBar = { CommonTopBar("DashBoard") },
         floatingActionButton = {
             FloatingActionButton(
                 onClick = { navController.navigate(Screen.AddChild.route) }
@@ -112,11 +99,11 @@ data class MonitoringFeature(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DashBoardMainScreen(
+    modifier: Modifier,
     appUsageViewModel: AppUsageViewModel,
     authViewModel: AuthViewModel,
     navController: NavController
 ) {
-
 
 
     val features = listOf(
@@ -127,84 +114,50 @@ fun DashBoardMainScreen(
         MonitoringFeature(Icons.Default.LocationOn, "Location", Screen.LocationScreen.route)
     )
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = "DashBoard",
-                        style = MaterialTheme.typography.headlineMedium.copy(
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onPrimary
-                        )
+
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .background(
+                brush = Brush.verticalGradient(
+                    colors = listOf(
+                        MaterialTheme.colorScheme.background,
+                        MaterialTheme.colorScheme.background.copy(alpha = 0.9f)
                     )
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primary
                 )
             )
-        },
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = { navController.navigate(Screen.AddChild.route) }
-            ) {
-                Icon(Icons.Default.Add, "")
-            }
-        },
-    ) { paddingValues ->
-        Box(
+    ) {
+        Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(
-                    brush = Brush.verticalGradient(
-                        colors = listOf(
-                            MaterialTheme.colorScheme.background,
-                            MaterialTheme.colorScheme.background.copy(alpha = 0.9f)
-                        )
-                    )
-                )
-                .padding(paddingValues)
+                .padding(16.dp)
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(16.dp)
+            ChildListScreen(authViewModel)
+            Text(
+                text = "Monitoring Features",
+                style = MaterialTheme.typography.titleLarge.copy(
+                    fontWeight = FontWeight.SemiBold
+                ),
+                modifier = Modifier.padding(bottom = 12.dp)
+            )
+
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(2),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                // Children List Section
-
-
-//
-//                // Features Grid
-//                Spacer(modifier = Modifier.height(24.dp))
-                ChildListScreen(authViewModel)
-
-
-                Text(
-                    text = "Monitoring Features",
-                    style = MaterialTheme.typography.titleLarge.copy(
-                        fontWeight = FontWeight.SemiBold
-                    ),
-                    modifier = Modifier.padding(bottom = 12.dp)
-                )
-
-                LazyVerticalGrid(
-                    columns = GridCells.Fixed(2),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    items(features) { feature ->
-                        FeatureCard(feature) {
-                            navController.navigate(feature.route)
-                        }
+                items(features) { feature ->
+                    FeatureCard(feature) {
+                        navController.navigate(feature.route)
                     }
-
                 }
 
             }
+
         }
     }
-}
 
+}
 
 
 @Composable

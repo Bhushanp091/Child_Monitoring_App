@@ -27,50 +27,18 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import com.example.child_monitoring_app.R
 import com.example.child_monitoring_app.Screen
 import com.example.child_monitoring_app.ui.presentation.component.ToastType
 import com.example.child_monitoring_app.ui.presentation.component.toast
 import com.example.child_monitoring_app.ui.theme.buttonColor
 import kotlinx.coroutines.launch
-
-
-//@Composable
-//fun ParentSignupScreen(viewModel: AuthViewModel, navController: NavController) {
-//    var name by remember { mutableStateOf("") }
-//    var email by remember { mutableStateOf("") }
-//    var password by remember { mutableStateOf("") }
-//    var message by remember { mutableStateOf("") }
-//    val coroutineScope = rememberCoroutineScope()
-//
-//    Column(modifier = Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.Center) {
-//        Text(text = "Parent Signup", style = MaterialTheme.typography.headlineMedium)
-//        Spacer(modifier = Modifier.height(16.dp))
-//
-//        OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text("Name") }, modifier = Modifier.fillMaxWidth())
-//        Spacer(modifier = Modifier.height(8.dp))
-//        OutlinedTextField(value = email, onValueChange = { email = it }, label = { Text("Email") }, modifier = Modifier.fillMaxWidth())
-//        Spacer(modifier = Modifier.height(8.dp))
-//        OutlinedTextField(value = password, onValueChange = { password = it }, label = { Text("Password") }, visualTransformation = PasswordVisualTransformation(), modifier = Modifier.fillMaxWidth())
-//        Spacer(modifier = Modifier.height(16.dp))
-//
-//        Button(onClick = {
-//            coroutineScope.launch {
-//                val result = viewModel.signUp(email, password, name)
-//                message = result.getOrDefault("Signup failed")
-//            }
-//        }, modifier = Modifier.fillMaxWidth()) {
-//            Text("Sign Up")
-//        }
-//
-//        Spacer(modifier = Modifier.height(16.dp))
-//        Text(text = message, color = MaterialTheme.colorScheme.error)
-//    }
-//}
 
 
 @Composable
@@ -88,9 +56,12 @@ fun ParentSignupScreen(
     val keyboardController = LocalSoftwareKeyboardController.current
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
+    val image = if (passwordVisible)
+        R.drawable.eye
+    else R.drawable.eye_slash
 
-    LaunchedEffect (message){
-        if (message == "Login successful"){
+    LaunchedEffect(message) {
+        if (message == "Login successful") {
             navController.navigate(Screen.ChildDashBoard.route)
         }
     }
@@ -190,15 +161,11 @@ fun ParentSignupScreen(
                         )
                     },
                     trailingIcon = {
-                        val image = if (passwordVisible)
-                            Icons.Filled.Add
-                        else Icons.Filled.PlayArrow
-
                         IconButton(onClick = {
                             passwordVisible = !passwordVisible
                         }) {
                             Icon(
-                                imageVector = image,
+                                painter = painterResource(image),
                                 contentDescription = "Toggle password visibility"
                             )
                         }
@@ -267,7 +234,7 @@ fun ParentSignupScreen(
                         if (name.isNotEmpty() && email.isNotEmpty() && password.isNotEmpty() && confirmPassword.isNotEmpty()) {
                             coroutineScope.launch {
                                 val result = authViewModel.signUp(email, password, name)
-                                 message = result.getOrDefault("Signup failed")
+                                message = result.getOrDefault("Signup failed")
                                 context.toast(message, ToastType.ERROR)
                             }
                         } else {

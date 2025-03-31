@@ -3,7 +3,6 @@ package com.example.child_monitoring_app.ui.presentation
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.child_monitoring_app.ui.data.ChildData
 import com.example.child_monitoring_app.ui.data.FirebaseAuthManager
 import kotlinx.coroutines.launch
 

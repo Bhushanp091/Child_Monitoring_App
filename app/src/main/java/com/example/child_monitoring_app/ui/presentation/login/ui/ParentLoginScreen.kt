@@ -19,12 +19,14 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.example.child_monitoring_app.R
 import com.example.child_monitoring_app.Screen
 import com.example.child_monitoring_app.ui.presentation.component.ToastType
 import com.example.child_monitoring_app.ui.presentation.component.toast
@@ -127,8 +129,8 @@ fun ParentLoginScreen(
     val context = LocalContext.current
 
 
-    LaunchedEffect (isLogIn){
-        if (isLogIn){
+    LaunchedEffect(isLogIn) {
+        if (isLogIn) {
             navController.navigate(Screen.DashBoard.route)
         }
     }
@@ -214,10 +216,10 @@ fun ParentLoginScreen(
                     },
                     trailingIcon = {
                         val image = if (passwordVisible)
-                            Icons.Filled.PlayArrow
-                        else Icons.Default.Add
+                            R.drawable.eye
+                        else R.drawable.eye_slash
                         Icon(
-                            imageVector = image,
+                            painter = painterResource(image),
                             modifier = Modifier.clickable {
                                 passwordVisible = !passwordVisible
                             },
@@ -269,9 +271,10 @@ fun ParentLoginScreen(
                                     isLogIn = true
                                 }
                             }
-                        }else{
+                        } else {
                             context.toast("Enter all field", ToastType.ERROR)
-                        }},
+                        }
+                    },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(56.dp),
@@ -296,7 +299,7 @@ fun ParentLoginScreen(
                         style = MaterialTheme.typography.bodyMedium
                     )
                     Text(
-                        "Log In",
+                        "Register yourself",
                         Modifier.clickable { navController.navigate(Screen.SignUp.route) })
 
                 }

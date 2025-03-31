@@ -13,14 +13,16 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import com.example.child_monitoring_app.R
 import network.chaintech.sdpcomposemultiplatform.ssp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CommonToolbar(
     title: String,
-    showBackButton:Boolean = true,
+    showBackButton: Boolean = true,
     onBackClick: () -> Unit
 ) {
     TopAppBar(
@@ -34,13 +36,13 @@ fun CommonToolbar(
         navigationIcon = {
             if (showBackButton) {
                 IconButton(onClick = onBackClick) {
-                    Icon(imageVector = Icons.Default.ArrowBack, contentDescription = "Back")
+                    Icon(
+                        painter = painterResource(R.drawable.icon_arrow_back),
+                        contentDescription = "Back"
+                    )
                 }
             }
         },
         modifier = Modifier.fillMaxWidth(),
-        colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = MaterialTheme.colorScheme.primary,
-        )
     )
 }

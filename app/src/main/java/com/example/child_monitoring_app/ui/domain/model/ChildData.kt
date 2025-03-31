@@ -1,4 +1,4 @@
-package com.example.child_monitoring_app.ui.data
+package com.example.child_monitoring_app.ui.domain.model
 
 data class ChildData(
     val name: String = "",

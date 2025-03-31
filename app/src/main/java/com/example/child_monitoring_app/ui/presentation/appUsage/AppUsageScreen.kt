@@ -14,7 +14,6 @@ import android.provider.Settings
 import androidx.compose.foundation.Image
 import androidx.compose.runtime.mutableStateOf
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import java.util.Calendar
 import java.util.concurrent.TimeUnit
 import androidx.compose.foundation.background
@@ -27,26 +26,17 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Canvas
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.core.graphics.drawable.toBitmap
 import com.example.child_monitoring_app.R
 import com.example.child_monitoring_app.ui.CommonUtil.formatMillisToTime
 import com.example.child_monitoring_app.ui.data.SharedPreference
-import com.example.child_monitoring_app.ui.data.appUsage.getAppUsageStats
-import com.example.child_monitoring_app.ui.presentation.component.TopBar
-import com.example.child_monitoring_app.ui.presentation.dashBoard.CommonToolbar
 import com.google.accompanist.drawablepainter.rememberDrawablePainter
 import network.chaintech.sdpcomposemultiplatform.sdp
 
 @Composable
-fun AppUsageScreen(appUsageViewModel: AppUsageViewModel) {
+fun AppUsageScreen(appUsageViewModel: AppUsageViewModel,modifier: Modifier) {
 
     var selectedInterval by remember { mutableStateOf(UsageStatsManager.INTERVAL_DAILY) }
     val context = LocalContext.current
@@ -73,12 +63,11 @@ fun AppUsageScreen(appUsageViewModel: AppUsageViewModel) {
     }
 
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize(),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        CommonToolbar(title = "AppUsage") { }
 
         if (!hasUsagePermission(context)) {
             Button(onClick = {

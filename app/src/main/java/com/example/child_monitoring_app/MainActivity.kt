@@ -4,7 +4,9 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -12,13 +14,12 @@ import androidx.navigation.compose.rememberNavController
 import com.example.child_monitoring_app.ui.presentation.addChild.AddChildScreen
 import com.example.child_monitoring_app.ui.presentation.appUsage.AppUsageScreen
 import com.example.child_monitoring_app.ui.presentation.appUsage.AppUsageViewModel
-import com.example.child_monitoring_app.ui.presentation.appUsage.CallLogHistoryScreen
 import com.example.child_monitoring_app.ui.presentation.appUsage.PhoneNumberList
 import com.example.child_monitoring_app.ui.presentation.appUsage.ShowChildCallHistory
 import com.example.child_monitoring_app.ui.presentation.browser.BrowserHistoryScreen
+import com.example.child_monitoring_app.ui.presentation.component.MainScaffold
 import com.example.child_monitoring_app.ui.presentation.dashBoard.ChildDashBoardScreen
 import com.example.child_monitoring_app.ui.presentation.dashBoard.DashBoardMainScreen
-import com.example.child_monitoring_app.ui.presentation.dashBoard.GetUserScreen
 import com.example.child_monitoring_app.ui.presentation.location.ShowLocationScreen
 import com.example.child_monitoring_app.ui.presentation.login.AuthViewModel
 import com.example.child_monitoring_app.ui.presentation.login.ParentChildSelectionScreen
@@ -58,47 +59,60 @@ fun Navigation() {
         }
 
         composable(Screen.SignUp.route) {
-            ParentSignupScreen(authViewModel,navController)
+            MainScaffold(navController, "Sign Up") {
+                ParentSignupScreen(authViewModel, navController)
+            }
         }
 
         composable(Screen.ChildLogin.route) {
-            ChildLoginScreen(authViewModel,navController)
+            MainScaffold(navController, "Child Login") {
+                ChildLoginScreen(authViewModel, navController)
+            }
         }
 
         composable(Screen.ParentLogin.route) {
-            ParentLoginScreen(authViewModel,navController)
+            MainScaffold(navController, "Login") {
+                ParentLoginScreen(authViewModel, navController)
+            }
         }
 
         composable(Screen.DashBoard.route) {
-            DashBoardMainScreen(appUsageViewModel,authViewModel,navController)
+            MainScaffold(navController, "DashBoard", showFloatingButton = true, showTopBar = false) {
+                DashBoardMainScreen(Modifier.padding(it),appUsageViewModel, authViewModel, navController)
+            }
         }
 
         composable(Screen.AddChild.route) {
-            AddChildScreen(authViewModel, navController)
+            MainScaffold(navController, "Add Child") {
+                AddChildScreen(authViewModel)
+            }
         }
 
         composable(Screen.AppUsage.route) {
-            val hasPermission = appUsageViewModel.hasPermission
-            if (hasPermission) {
-                AppUsageScreen(appUsageViewModel)
-            } else {
-                appUsageViewModel.requestPermission()
+            MainScaffold(navController, "Add Child") {
+                val hasPermission = appUsageViewModel.hasPermission
+                if (hasPermission) {
+                    AppUsageScreen(appUsageViewModel,Modifier.padding(it))
+                } else {
+                    appUsageViewModel.requestPermission()
+                }
             }
         }
 
         composable(Screen.CallHistory.route) {
-            ShowChildCallHistory(appUsageViewModel)
-//            CallLogHistoryScreen(appUsageViewModel){}
+            MainScaffold(navController, "Sign Up") {
+                ShowChildCallHistory(appUsageViewModel,Modifier.padding(it))
+            }
         }
-
-
 
         composable(Screen.LocationScreen.route) {
             ShowLocationScreen()
         }
 
         composable(Screen.ChildDashBoard.route) {
-            ChildDashBoardScreen(authViewModel)
+            MainScaffold(navController,"DashBoard") {
+                ChildDashBoardScreen(authViewModel)
+            }
         }
 
         composable(Screen.PhoneNumberList.route) {
@@ -108,12 +122,7 @@ fun Navigation() {
         composable(Screen.BrowserHistory.route) {
             BrowserHistoryScreen()
         }
-
-
-
     }
-
-
 }
 
 
@@ -127,7 +136,7 @@ sealed class Screen(val route: String) {
     object PreLogin : Screen("pre_login")
     object ChildLogin : Screen("child_login")
     object AddChild : Screen("add_Child")
-    object LocationScreen:Screen("show_location")
-    object PhoneNumberList:Screen("phone_number_list")
-    object BrowserHistory:Screen("browser_history_list")
+    object LocationScreen : Screen("show_location")
+    object PhoneNumberList : Screen("phone_number_list")
+    object BrowserHistory : Screen("browser_history_list")
 }

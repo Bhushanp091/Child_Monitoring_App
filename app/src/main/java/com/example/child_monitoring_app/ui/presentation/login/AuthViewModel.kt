@@ -1,7 +1,8 @@
 package com.example.child_monitoring_app.ui.presentation.login
 
 import android.content.Context
-import com.example.child_monitoring_app.ui.data.ChildData
+import android.net.Uri
+import com.example.child_monitoring_app.ui.domain.model.ChildData
 import com.example.child_monitoring_app.ui.data.FirebaseAuthManager
 import com.example.child_monitoring_app.ui.presentation.BaseViewModel
 import kotlinx.coroutines.Dispatchers
@@ -23,9 +24,9 @@ class AuthViewModel : BaseViewModel() {
         }
     }
 
-    suspend fun saveUser(parentId: String, name: String, age: Int, username: String, password: String): Result<String> {
+    suspend fun saveUser(parentId: String, name: String, age: Int, username: String, password: String,imageUri:Uri?): Result<String> {
         return withContext(Dispatchers.IO) {
-            authManager.saveNewChildData(parentId, name, age, username, password)
+            authManager.saveNewChildData(parentId, name, age, username, password,imageUri)
         }
     }
 

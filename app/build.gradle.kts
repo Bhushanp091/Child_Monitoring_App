@@ -56,6 +56,8 @@ dependencies {
     implementation(libs.androidx.credentials.play.services.auth)
     implementation(libs.googleid)
     implementation(libs.firebase.firestore)
+    implementation(libs.firebase.database)
+    implementation(libs.firebase.storage)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -68,6 +70,6 @@ dependencies {
     implementation ("androidx.navigation:navigation-compose:2.8.8")
     implementation ("com.google.accompanist:accompanist-drawablepainter:0.31.1-alpha")
     implementation ("com.google.android.gms:play-services-location:21.0.1")
-
+    implementation("io.coil-kt:coil-compose:2.5.0")
 
 }

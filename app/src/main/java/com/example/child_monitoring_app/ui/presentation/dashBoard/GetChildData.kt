@@ -20,7 +20,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import com.example.child_monitoring_app.ui.data.ChildData
+import com.example.child_monitoring_app.ui.domain.model.ChildData
 import com.example.child_monitoring_app.ui.presentation.login.AuthViewModel
 import kotlinx.coroutines.launch
 

@@ -2,24 +2,25 @@ package com.example.child_monitoring_app.ui.data
 
 import android.app.usage.UsageStatsManager
 import android.content.Context
+import android.net.Uri
 import android.util.Log
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import com.example.child_monitoring_app.ui.data.appUsage.getAppUsageStats
 import com.example.child_monitoring_app.ui.data.callHistory.getCallLogs
-import com.example.child_monitoring_app.ui.presentation.appUsage.AppUsageData
+import com.example.child_monitoring_app.ui.domain.model.ChildData
 import com.example.child_monitoring_app.ui.presentation.appUsage.AppUsageInfo
 import com.example.child_monitoring_app.ui.presentation.appUsage.CallLogModel
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.tasks.await
 import java.util.Calendar
 
 class FirebaseAuthManager() {
     private val auth: FirebaseAuth = FirebaseAuth.getInstance()
     private val firestore = FirebaseFirestore.getInstance()
+    private val storage = FirebaseStorage.getInstance().reference
+
 
     suspend fun login(email: String, password: String, context: Context): Result<String> {
         return try {
@@ -62,31 +63,47 @@ class FirebaseAuthManager() {
         name: String,
         age: Int,
         username: String,
-        password: String
+        password: String,
+        imageUri: Uri? // Profile Image Uri
     ): Result<String> {
-        val childData = hashMapOf(
-            "name" to name,
-            "age" to age.toString(),
-            "username" to username,
-            "password" to password,
-            "data" to hashMapOf(
-                "location" to null,
-                "appUsage" to emptyList<HashMap<String, Any>>(),
-                "contacts" to emptyList<HashMap<String, Any>>(),
-                "callLogs" to emptyList<HashMap<String, Any>>(),
-                "browserHistory" to emptyList<HashMap<String, Any>>(),
-                "youtubeHistory" to emptyList<HashMap<String, Any>>()
-            )
-        )
+        try {
+            val imageUrl = imageUri?.let { uploadProfilePhoto(username, it) } ?: ""
 
-        return try {
+            val childData = hashMapOf(
+                "name" to name,
+                "age" to age.toString(),
+                "username" to username,
+                "password" to password,
+                "profilePhoto" to imageUrl, // Store Profile Photo URL
+                "data" to hashMapOf(
+                    "location" to null,
+                    "appUsage" to emptyList<HashMap<String, Any>>(),
+                    "contacts" to emptyList<HashMap<String, Any>>(),
+                    "callLogs" to emptyList<HashMap<String, Any>>(),
+                    "browserHistory" to emptyList<HashMap<String, Any>>(),
+                    "youtubeHistory" to emptyList<HashMap<String, Any>>()
+                )
+            )
+
             firestore.collection("parents").document(parentId)
                 .collection("children").document(username)
                 .set(childData).await()
-            Result.success("Child data saved successfully")
+
+            return Result.success("Child data saved successfully")
         } catch (e: Exception) {
             println("Add Child Error $e")
-            Result.failure(e)
+            return Result.failure(e)
+        }
+    }
+
+    private suspend fun uploadProfilePhoto(username: String, imageUri: Uri): String {
+        return try {
+            val imageRef = storage.child("profile_photos/$username.jpg")
+            imageRef.putFile(imageUri).await()
+            imageRef.downloadUrl.await().toString()
+        } catch (e: Exception) {
+            println("Image Upload Error: ${e.message}")
+            ""
         }
     }
 
@@ -115,8 +132,6 @@ class FirebaseAuthManager() {
             emptyList()
         }
     }
-
-
 
 
     suspend fun childLogin(
@@ -202,7 +217,11 @@ class FirebaseAuthManager() {
             }
     }
 
-    fun fetchCallLogsFromFirebase(parentId: String, childId: String, onResult: (List<CallLogModel>) -> Unit) {
+    fun fetchCallLogsFromFirebase(
+        parentId: String,
+        childId: String,
+        onResult: (List<CallLogModel>) -> Unit
+    ) {
         firestore.collection("parents").document(parentId)
             .collection("children").document(childId)
             .get()
@@ -230,7 +249,7 @@ class FirebaseAuthManager() {
 
     fun uploadAppUsageToFirebase(context: Context, username: String) {
 
-        var selectedInterval= mutableStateOf(UsageStatsManager.INTERVAL_MONTHLY)
+        var selectedInterval = mutableStateOf(UsageStatsManager.INTERVAL_MONTHLY)
         val calendar = Calendar.getInstance()
         val endTime = calendar.timeInMillis
         calendar.add(selectedInterval.value, -1) // -1 Day, -1 Week, or -1 Month
@@ -289,7 +308,11 @@ class FirebaseAuthManager() {
             }
     }
 
-    fun fetchAppUsageFromFirebase(parentId: String, childId: String, onResult: (List<AppUsageInfo>) -> Unit) {
+    fun fetchAppUsageFromFirebase(
+        parentId: String,
+        childId: String,
+        onResult: (List<AppUsageInfo>) -> Unit
+    ) {
         firestore.collection("parents").document(parentId)
             .collection("children").document(childId)
             .get()
