@@ -21,10 +21,14 @@ class AuthViewModel : BaseViewModel() {
         }
     }
 
-    suspend fun signUp(email: String, password: String,name: String): Result<String> {
+    suspend fun signUp(email: String, password: String,name: String, context: Context): Result<String> {
         return withContext(Dispatchers.IO) {
-            authManager.signUpParent(email, password,name)
+            authManager.signUpParent(email, password,name, context)
         }
+    }
+
+    fun logOut(){
+        authManager.logOut()
     }
 
     suspend fun saveUser(parentId: String, name: String, age: Int, username: String, password: String,imageUri:Uri?): Result<String> {

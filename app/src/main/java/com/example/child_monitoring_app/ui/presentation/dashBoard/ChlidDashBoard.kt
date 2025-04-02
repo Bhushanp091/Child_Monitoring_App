@@ -19,19 +19,15 @@ fun ChildDashBoardScreen(authViewModel: AuthViewModel) {
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ){
-//        Text("This is child Home screen here all data will be collected :)")
         val context = LocalContext.current
         val childId  = SharedPreference.getChildId(context)?:""
         CommonButton(
-            text = "Nacho",
+            text = "Hmmmmmmmmmmmmmmmm :)",
             onClick = {
                 println("Firebase store child data")
                 authViewModel.storeChildData(context,childId)
             }
         )
-
-//        GetUserScreen(authViewModel)
-
     }
 }
 

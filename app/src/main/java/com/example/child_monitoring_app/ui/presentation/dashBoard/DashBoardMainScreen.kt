@@ -1,5 +1,6 @@
 package com.example.child_monitoring_app.ui.presentation.dashBoard
 
+import android.content.Context
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -24,9 +25,12 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.example.child_monitoring_app.ui.data.SharedPreference
 import com.example.child_monitoring_app.ui.presentation.appUsage.AppUsageViewModel
+import com.example.child_monitoring_app.ui.presentation.component.CommonButton
 
 
 // Feature Model
@@ -43,6 +47,8 @@ fun DashBoardMainScreen(
     authViewModel: AuthViewModel,
     navController: NavController
 ) {
+
+    val context = LocalContext.current
 
     val features = listOf(
         MonitoringFeature(Icons.Default.PlayArrow, "App Usage", Screen.AppUsage.route),
@@ -90,9 +96,21 @@ fun DashBoardMainScreen(
 
             }
 
-        }
-    }
+            CommonButton(
+                text = "Log Out",
+                onClick = {
+                    SharedPreference.logout(context)
+                    authViewModel.logOut()
+                    navController.navigate(Screen.PreLogin.route) {
+                        popUpTo(Screen.DashBoard.route) { inclusive = true }
+                    }
+                }
+            )
 
+        }
+
+
+    }
 }
 
 

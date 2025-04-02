@@ -7,10 +7,12 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.example.child_monitoring_app.ui.data.SharedPreference
 import com.example.child_monitoring_app.ui.presentation.addChild.AddChildScreen
 import com.example.child_monitoring_app.ui.presentation.appUsage.AppUsageScreen
 import com.example.child_monitoring_app.ui.presentation.appUsage.AppUsageViewModel
@@ -46,12 +48,18 @@ fun Navigation() {
     val navController = rememberNavController()
     val appUsageViewModel: AppUsageViewModel = viewModel()
     val authViewModel: AuthViewModel = viewModel()
+    val context = LocalContext.current
 
 
 
     NavHost(
         navController = navController,
-        startDestination = Screen.PreLogin.route
+        startDestination = if (SharedPreference.isUserLoggedIn(context)) {
+            Screen.ShowChildList.route
+        } else {
+            Screen.PreLogin.route
+        }
+//        startDestination = Screen.PreLogin.route
 //        startDestination = Screen.DashBoard.route
     ) {
 

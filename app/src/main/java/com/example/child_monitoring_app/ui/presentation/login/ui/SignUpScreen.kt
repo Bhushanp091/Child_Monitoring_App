@@ -233,7 +233,7 @@ fun ParentSignupScreen(
                     onClick = {
                         if (name.isNotEmpty() && email.isNotEmpty() && password.isNotEmpty() && confirmPassword.isNotEmpty()) {
                             coroutineScope.launch {
-                                val result = authViewModel.signUp(email, password, name)
+                                val result = authViewModel.signUp(email, password, name,context)
                                 message = result.getOrDefault("Signup failed")
                                 context.toast(message, ToastType.ERROR)
                             }

@@ -32,13 +32,18 @@ class FirebaseAuthManager() {
                 authResult.user?.uid ?: return Result.failure(Exception("User ID not found"))
 
             SharedPreference.saveParentIdLocally(context, parentId)
+            SharedPreference.saveLoginState(context,true)
             Result.success("Login successful")
         } catch (e: Exception) {
             Result.failure(e)
         }
     }
 
-    suspend fun signUpParent(email: String, password: String, name: String): Result<String> {
+    fun logOut(){
+        FirebaseAuth.getInstance().signOut()
+    }
+
+    suspend fun signUpParent(email: String, password: String, name: String,context: Context): Result<String> {
         return try {
             val authResult = auth.createUserWithEmailAndPassword(email, password).await()
             val parentId =
@@ -51,6 +56,7 @@ class FirebaseAuthManager() {
             )
 
             firestore.collection("parents").document(parentId).set(parentData).await()
+            SharedPreference.saveLoginState(context,true)
             Result.success("Parent signup successful")
         } catch (e: Exception) {
             println("Sign Up Failed $e")
