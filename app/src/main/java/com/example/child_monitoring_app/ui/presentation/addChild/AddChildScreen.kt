@@ -38,6 +38,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -60,108 +61,21 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
 import com.example.child_monitoring_app.R
-import com.example.child_monitoring_app.Screen
 import com.example.child_monitoring_app.ui.data.SharedPreference
 import com.example.child_monitoring_app.ui.presentation.component.ToastType
 import com.example.child_monitoring_app.ui.presentation.component.toast
 import com.example.child_monitoring_app.ui.presentation.login.AuthViewModel
 import com.example.child_monitoring_app.ui.theme.buttonColor
-import com.google.accompanist.drawablepainter.rememberDrawablePainter
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import network.chaintech.sdpcomposemultiplatform.sdp
 
-@Composable
-fun AddChildScreenNew(
-    viewModel: AuthViewModel,
-    navController: NavController
-) {
-    var name by remember { mutableStateOf("") }
-    var age by remember { mutableStateOf("") }
-    var username by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-    var message by remember { mutableStateOf("") }
-    val coroutineScope = rememberCoroutineScope()
-    val context = LocalContext.current
-    val parentId = SharedPreference.getParentId(context) ?: ""
-    var imageUri by remember { mutableStateOf<Uri?>(null) }
-    var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
-
-
-    // Launcher to pick an image from gallery
-    ImagePickerScreen { uri ->
-        selectedImageUri = uri // Store selected image URI
-    }
-
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp), verticalArrangement = Arrangement.Center
-    ) {
-        Text(text = "Add New Child", style = MaterialTheme.typography.headlineMedium)
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        OutlinedTextField(
-            value = name,
-            onValueChange = { name = it },
-            label = { Text("Name") },
-            modifier = Modifier.fillMaxWidth()
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-
-        OutlinedTextField(
-            value = age,
-            onValueChange = { age = it },
-            label = { Text("Age") },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            modifier = Modifier.fillMaxWidth()
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-
-        OutlinedTextField(
-            value = username,
-            onValueChange = { username = it },
-            label = { Text("Username") },
-            modifier = Modifier.fillMaxWidth()
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-
-        OutlinedTextField(
-            value = password,
-            onValueChange = { password = it },
-            label = { Text("Password") },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-            modifier = Modifier.fillMaxWidth()
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Button(onClick = {
-            coroutineScope.launch {
-                // 🔹 You should get this from authentication
-                val result = viewModel.saveUser(
-                    parentId,
-                    name,
-                    age.toIntOrNull() ?: 0,
-                    username,
-                    password,
-                    selectedImageUri
-                )
-                message = result.getOrDefault("Error occurred")
-            }
-        }, modifier = Modifier.fillMaxWidth()) {
-            Text("Add Child Data")
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-        Text(text = message, color = MaterialTheme.colorScheme.error)
-    }
-}
 
 
 @Composable
 fun AddChildScreen(
-    authViewModel: AuthViewModel
+    authViewModel: AuthViewModel,
+    onNavigateBack:()->Unit
 ) {
 
     var name by remember { mutableStateOf("") }
@@ -180,6 +94,18 @@ fun AddChildScreen(
         R.drawable.eye
     else R.drawable.eye_slash
 
+    LaunchedEffect(message) {
+        if (message == "Success"){
+            name = ""
+            age = ""
+            username = ""
+            password = ""
+            context.toast("Child Added Successfully")
+            message = ""
+            delay(1000)
+            onNavigateBack()
+        }
+    }
 
 
     Box(
@@ -332,7 +258,8 @@ fun AddChildScreen(
                                     age.toIntOrNull() ?: 0,
                                     username,
                                     password,
-                                    selectedImageUri
+                                    selectedImageUri,
+                                    context
                                 )
                                 message = result.getOrDefault("Error occurred")
                             }

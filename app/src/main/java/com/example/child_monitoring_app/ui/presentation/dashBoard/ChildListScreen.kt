@@ -31,11 +31,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.child_monitoring_app.R
+import com.example.child_monitoring_app.ui.domain.decodeBase64ToBitmap
 import com.example.child_monitoring_app.ui.domain.model.ChildData
 import com.example.child_monitoring_app.ui.presentation.login.AuthViewModel
 import kotlinx.coroutines.launch
@@ -70,18 +72,10 @@ fun ChildListScreen(
         modifier = modifier.fillMaxSize().verticalScroll(scrollState)
     ) {
         if (isLoading) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator()
             }
         } else {
-            Text(
-                text = "My Children",
-                style = MaterialTheme.typography.titleLarge.copy(
-                    fontWeight = FontWeight.SemiBold
-                ),
-                modifier = Modifier.padding(bottom = 12.dp)
-            )
-
             children.forEach { it ->
                 ChildProfileCard(it) { childId ->
                     authViewModel.childId.value = childId
@@ -110,14 +104,9 @@ fun ChildProfileCard(
             modifier = Modifier
                 .padding(16.dp)
         ) {
-            Image(
-                painter = painterResource(id = R.drawable.child_image),
-                contentDescription = "${childData.name}'s profile",
-                modifier = Modifier
-                    .size(80.dp)
-                    .clip(CircleShape),
-                contentScale = ContentScale.Crop
-            )
+
+
+            ProfileImage(childData.image.toString())
 
             Spacer(modifier = Modifier.width(16.dp)) // Space between image and text
 
@@ -140,4 +129,26 @@ fun ChildProfileCard(
             }
         }
     }
+}
+
+
+@Composable
+fun ProfileImage(base64String: String) {
+    val bitmap = decodeBase64ToBitmap(base64String)
+
+    if (bitmap != null) {
+        Image(
+            bitmap = bitmap.asImageBitmap(),
+            contentDescription = "Profile Picture",
+            modifier = Modifier.size(100.dp).clip(CircleShape)
+        )
+    } else {
+        Image(
+            painter = painterResource(id = R.drawable.child_image),
+            contentDescription = "profile",
+            modifier = Modifier
+                .size(80.dp)
+                .clip(CircleShape),
+            contentScale = ContentScale.Crop
+        )    }
 }

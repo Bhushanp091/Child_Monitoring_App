@@ -2,8 +2,14 @@ package com.example.child_monitoring_app.ui.data
 
 import android.app.usage.UsageStatsManager
 import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.ImageDecoder
 import android.net.Uri
+import android.os.Build
+import android.util.Base64
 import android.util.Log
+import androidx.annotation.RequiresApi
 import androidx.compose.runtime.mutableStateOf
 import com.example.child_monitoring_app.ui.data.appUsage.getAppUsageStats
 import com.example.child_monitoring_app.ui.data.callHistory.Contact
@@ -16,6 +22,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.tasks.await
+import java.io.ByteArrayOutputStream
 import java.util.Calendar
 
 class FirebaseAuthManager() {
@@ -66,22 +73,20 @@ class FirebaseAuthManager() {
 
 
     suspend fun saveNewChildData(
+        context: Context,
         parentId: String,
         name: String,
         age: Int,
         username: String,
         password: String,
-        imageUri: Uri? // Profile Image Uri
+        imageUri: Uri?
     ): Result<String> {
         try {
-            val imageUrl = imageUri?.let { uploadProfilePhoto(username, it) } ?: ""
-
             val childData = hashMapOf(
                 "name" to name,
                 "age" to age.toString(),
                 "username" to username,
                 "password" to password,
-                "profilePhoto" to imageUrl, // Store Profile Photo URL
                 "data" to hashMapOf(
                     "location" to null,
                     "appUsage" to emptyList<HashMap<String, Any>>(),
@@ -91,25 +96,27 @@ class FirebaseAuthManager() {
                     "youtubeHistory" to emptyList<HashMap<String, Any>>()
                 )
             )
-
             firestore.collection("parents").document(parentId)
                 .collection("children").document(username)
                 .set(childData).await()
 
-            return Result.success("Child data saved successfully")
+            return Result.success("Success")
         } catch (e: Exception) {
             println("Add Child Error $e")
             return Result.failure(e)
         }
     }
 
-    private suspend fun uploadProfilePhoto(username: String, imageUri: Uri): String {
+    private fun encodeImageToBase64(context: Context, imageUri: Uri): String {
         return try {
-            val imageRef = storage.child("profile_photos/$username.jpg")
-            imageRef.putFile(imageUri).await()
-            imageRef.downloadUrl.await().toString()
+            val inputStream = context.contentResolver.openInputStream(imageUri)
+            val bitmap = BitmapFactory.decodeStream(inputStream)
+            val outputStream = ByteArrayOutputStream()
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 50, outputStream)
+            val byteArray = outputStream.toByteArray()
+            Base64.encodeToString(byteArray, Base64.DEFAULT)
         } catch (e: Exception) {
-            println("Image Upload Error: ${e.message}")
+            println("Image Encoding Error: ${e.message}")
             ""
         }
     }

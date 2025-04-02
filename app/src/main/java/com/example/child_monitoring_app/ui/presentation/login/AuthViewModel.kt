@@ -15,36 +15,53 @@ class AuthViewModel : BaseViewModel() {
     var childId = mutableStateOf("")
 
 
-    suspend fun login(email: String, password: String,context:Context): Result<String> {
+    suspend fun login(email: String, password: String, context: Context): Result<String> {
         return withContext(Dispatchers.IO) {
-            authManager.login(email, password,context)
+            authManager.login(email, password, context)
         }
     }
 
-    suspend fun signUp(email: String, password: String,name: String, context: Context): Result<String> {
+    suspend fun signUp(
+        email: String,
+        password: String,
+        name: String,
+        context: Context
+    ): Result<String> {
         return withContext(Dispatchers.IO) {
-            authManager.signUpParent(email, password,name, context)
+            authManager.signUpParent(email, password, name, context)
         }
     }
 
-    fun logOut(){
+    fun logOut() {
         authManager.logOut()
     }
 
-    suspend fun saveUser(parentId: String, name: String, age: Int, username: String, password: String,imageUri:Uri?): Result<String> {
+    suspend fun saveUser(
+        parentId: String,
+        name: String,
+        age: Int,
+        username: String,
+        password: String,
+        imageUri: Uri?,
+        context: Context
+    ): Result<String> {
         return withContext(Dispatchers.IO) {
-            authManager.saveNewChildData(parentId, name, age, username, password,imageUri)
+            authManager.saveNewChildData(context, parentId, name, age, username, password, imageUri)
         }
     }
 
-    suspend fun childLogin(username: String, password: String,context: Context): Result<ChildData> {
+    suspend fun childLogin(
+        username: String,
+        password: String,
+        context: Context
+    ): Result<ChildData> {
         return withContext(Dispatchers.IO) {
-            authManager.childLogin(username,password,context)
+            authManager.childLogin(username, password, context)
         }
     }
 
-    suspend fun getChildList():List<ChildData>{
-        return withContext(Dispatchers.IO){
+    suspend fun getChildList(): List<ChildData> {
+        return withContext(Dispatchers.IO) {
             authManager.getChildrenList()
         }
     }

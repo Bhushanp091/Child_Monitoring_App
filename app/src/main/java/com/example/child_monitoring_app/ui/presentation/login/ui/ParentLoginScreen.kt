@@ -187,7 +187,7 @@ fun ParentLoginScreen(
                         if (email.isNotEmpty() && password.isNotEmpty()) {
                             coroutineScope.launch {
                                 val result =
-                                    if (isSignUp) authViewModel.signUp(email, password, name)
+                                    if (isSignUp) authViewModel.signUp(email, password, name,context)
                                     else authViewModel.login(email, password, context)
                                 message = result.getOrDefault("Wrong Credentials")
                                 context.toast(message, ToastType.ERROR)

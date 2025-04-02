@@ -103,7 +103,9 @@ fun Navigation() {
 
         composable(Screen.AddChild.route) {
             MainScaffold(navController, "Add Child") {
-                AddChildScreen(authViewModel)
+                AddChildScreen(authViewModel){
+                    navController.popBackStack()
+                }
             }
         }
 
