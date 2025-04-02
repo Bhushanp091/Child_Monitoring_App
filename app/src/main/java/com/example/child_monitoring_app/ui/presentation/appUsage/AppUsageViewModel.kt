@@ -20,6 +20,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.child_monitoring_app.ui.data.FirebaseAuthManager
+import com.example.child_monitoring_app.ui.data.callHistory.Contact
 import com.example.child_monitoring_app.ui.presentation.BaseViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -104,6 +105,7 @@ class AppUsageViewModel(application: Application) : AndroidViewModel(application
 
     var hasPermissionMain = mutableStateOf(false)
     var callLogsMain = mutableStateOf(emptyList<CallLogModel>())
+    var contactList = mutableStateOf(emptyList<Contact>())
     val showLoaderMain = mutableStateOf(false)
 
 

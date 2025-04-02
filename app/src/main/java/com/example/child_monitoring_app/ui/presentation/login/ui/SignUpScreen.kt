@@ -268,7 +268,6 @@ fun ParentSignupScreen(
                     Text(
                         "Log In",
                         Modifier.clickable { navController.navigate(Screen.ParentLogin.route) })
-
                 }
             }
         }

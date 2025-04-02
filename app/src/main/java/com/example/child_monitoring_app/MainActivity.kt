@@ -78,8 +78,18 @@ fun Navigation() {
         }
 
         composable(Screen.DashBoard.route) {
-            MainScaffold(navController, "DashBoard", showFloatingButton = true, showBackButton = false) {
-                DashBoardMainScreen(Modifier.padding(it),appUsageViewModel, authViewModel, navController)
+            MainScaffold(
+                navController,
+                "DashBoard",
+                showFloatingButton = true,
+                showBackButton = false
+            ) {
+                DashBoardMainScreen(
+                    Modifier.padding(it),
+                    appUsageViewModel,
+                    authViewModel,
+                    navController
+                )
             }
         }
 
@@ -93,7 +103,7 @@ fun Navigation() {
             MainScaffold(navController, "App Usage") {
                 val hasPermission = appUsageViewModel.hasPermission
                 if (hasPermission) {
-                    AppUsageScreen(appUsageViewModel,authViewModel,Modifier.padding(it))
+                    AppUsageScreen(appUsageViewModel, authViewModel, Modifier.padding(it))
                 } else {
                     appUsageViewModel.requestPermission()
                 }
@@ -102,13 +112,18 @@ fun Navigation() {
 
         composable(Screen.CallHistory.route) {
             MainScaffold(navController, "Call Log History") {
-                ShowChildCallHistory(appUsageViewModel,authViewModel,Modifier.padding(it))
+                ShowChildCallHistory(appUsageViewModel, authViewModel, Modifier.padding(it))
             }
         }
 
         composable(Screen.ShowChildList.route) {
-            MainScaffold(navController, "Child List", showFloatingButton = true, showBackButton = false) {
-                ChildListScreen(authViewModel,Modifier.padding(it)) {
+            MainScaffold(
+                navController,
+                "Child List",
+                showFloatingButton = true,
+                showBackButton = false
+            ) {
+                ChildListScreen(authViewModel, Modifier.padding(it)) {
                     navController.navigate(Screen.DashBoard.route)
                 }
             }
@@ -119,13 +134,19 @@ fun Navigation() {
         }
 
         composable(Screen.ChildDashBoard.route) {
-            MainScaffold(navController,"DashBoard") {
+            MainScaffold(navController, "DashBoard") {
                 ChildDashBoardScreen(authViewModel)
             }
         }
 
         composable(Screen.PhoneNumberList.route) {
-            PhoneNumberList()
+            MainScaffold(navController, "Contact List") {
+                PhoneNumberList(
+                    modifier = Modifier.padding(it),
+                    authViewModel = authViewModel,
+                    appUsageViewModel = appUsageViewModel
+                )
+            }
         }
 
         composable(Screen.BrowserHistory.route) {

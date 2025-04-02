@@ -6,7 +6,9 @@ import android.net.Uri
 import android.util.Log
 import androidx.compose.runtime.mutableStateOf
 import com.example.child_monitoring_app.ui.data.appUsage.getAppUsageStats
+import com.example.child_monitoring_app.ui.data.callHistory.Contact
 import com.example.child_monitoring_app.ui.data.callHistory.getCallLogs
+import com.example.child_monitoring_app.ui.data.callHistory.getContacts
 import com.example.child_monitoring_app.ui.domain.model.ChildData
 import com.example.child_monitoring_app.ui.presentation.appUsage.AppUsageInfo
 import com.example.child_monitoring_app.ui.presentation.appUsage.CallLogModel
@@ -29,7 +31,6 @@ class FirebaseAuthManager() {
             val parentId =
                 authResult.user?.uid ?: return Result.failure(Exception("User ID not found"))
 
-            // Store Parent ID in SharedPreferences
             SharedPreference.saveParentIdLocally(context, parentId)
             Result.success("Login successful")
         } catch (e: Exception) {
@@ -337,6 +338,94 @@ class FirebaseAuthManager() {
             }
             .addOnFailureListener { Log.e("Firebase", "Error fetching appUsage: ${it.message}") }
     }
+
+
+
+    suspend fun uploadContactsToFirebase(context: Context, username: String) {
+        val callLogs = getContacts(context)
+        println("Contacts $callLogs")
+        println("Username $username")
+
+        // Step 1: Find the correct parent that has this child
+        firestore.collection("parents")
+            .get()
+            .addOnSuccessListener { parentSnapshot ->
+                for (parentDoc in parentSnapshot.documents) {
+                    val parentId = parentDoc.id  // Get the parent document ID
+
+                    // Step 2: Find the child document inside this parent's "children" collection
+                    firestore.collection("parents").document(parentId)
+                        .collection("children")
+                        .whereEqualTo("username", username) // Find child by username
+                        .get()
+                        .addOnSuccessListener { childSnapshot ->
+                            if (!childSnapshot.isEmpty) {
+                                val childDoc = childSnapshot.documents[0]
+                                val childId = childDoc.id  // Get the child document ID
+
+                                // Step 3: Prepare call logs data
+                                val callLogsList = callLogs.map { log ->
+                                    hashMapOf(
+                                        "name" to log.name,
+                                        "phoneNumber" to log.phoneNumber,
+                                        "id" to log.id,
+                                    )
+                                }
+
+                                // Step 4: Update Firestore at the correct path
+                                firestore.collection("parents").document(parentId)
+                                    .collection("children").document(childId)
+                                    .update("data.contacts", callLogsList)
+                                    .addOnSuccessListener {
+                                        Log.d("Firebase", "Contacts updated successfully")
+                                    }
+                                    .addOnFailureListener {
+                                        Log.e("Firebase", "Error updating call logs: ${it.message}")
+                                    }
+                            } else {
+                                Log.e("Firebase", "No child document found for username: $username")
+                            }
+                        }
+                        .addOnFailureListener {
+                            Log.e("Firebase", "Error fetching child document: ${it.message}")
+                        }
+                }
+            }
+            .addOnFailureListener {
+                Log.e("Firebase", "Error fetching parent document: ${it.message}")
+            }
+    }
+
+
+    fun fetchContactsFromFirebase(
+        parentId: String,
+        childId: String,
+        onResult: (List<Contact>) -> Unit
+    ) {
+        firestore.collection("parents").document(parentId)
+            .collection("children").document(childId)
+            .get()
+            .addOnSuccessListener { document ->
+                if (document.exists()) {
+                    val callLogsList = document.get("data.contacts") as? List<HashMap<String, Any>>
+                    val callLogs = callLogsList?.map { log ->
+                        Contact(
+                            name = log["name"] as? String ?: "",
+                            id =  log["id"] as? String ?: "",
+                            phoneNumber = log["phoneNumber"] as? String ?: ""
+                        )
+                    } ?: emptyList()
+
+                    onResult(callLogs)
+                } else {
+                    Log.e("Firebase", "Child document not found")
+                    onResult(emptyList())
+                }
+            }
+            .addOnFailureListener { Log.e("Firebase", "Error fetching call contacts: ${it.message}") }
+    }
+
+
 
 
 }

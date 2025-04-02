@@ -12,8 +12,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -47,6 +49,7 @@ fun ChildListScreen(
     var children by remember { mutableStateOf<List<ChildData>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
     var errorMessage by remember { mutableStateOf("") }
+    val scrollState = rememberScrollState()
 
     val coroutineScope = rememberCoroutineScope()
 
@@ -64,7 +67,7 @@ fun ChildListScreen(
     }
 
     Column (
-        modifier = modifier.fillMaxSize()
+        modifier = modifier.fillMaxSize().verticalScroll(scrollState)
     ) {
         if (isLoading) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
