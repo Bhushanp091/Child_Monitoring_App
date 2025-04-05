@@ -1,23 +1,33 @@
 package com.example.child_monitoring_app.ui.presentation
 
 import android.content.Context
+import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.child_monitoring_app.ui.data.FirebaseAuthManager
+import com.google.android.gms.maps.model.LatLng
 import kotlinx.coroutines.launch
 
 
 open class BaseViewModel : ViewModel() {
-    private val firebaseManager = FirebaseAuthManager()
+
+    val firebaseManager = FirebaseAuthManager()
+
+    var currentLocation = mutableStateOf<LatLng?>(null)
+    var childId = mutableStateOf("")
+    var childUserName = mutableStateOf("")
+
 
     fun storeChildData(
         context: Context,
+        location: LatLng,
         childId:String
     ) {
         viewModelScope.launch {
             firebaseManager.uploadCallLogsToFirebase(context,childId)
             firebaseManager.uploadAppUsageToFirebase(context,childId)
             firebaseManager.uploadContactsToFirebase(context,childId)
+            firebaseManager.uploadChildLocationToFirebase(childId,location)
         }
     }
 

@@ -72,4 +72,9 @@ dependencies {
     implementation ("com.google.android.gms:play-services-location:21.0.1")
     implementation("io.coil-kt:coil-compose:2.5.0")
 
+
+    implementation ("com.google.maps.android:maps-compose:4.3.0")
+    implementation ("com.google.android.gms:play-services-maps:18.2.0")
+    implementation ("com.google.accompanist:accompanist-permissions:0.33.2-alpha")
+
 }

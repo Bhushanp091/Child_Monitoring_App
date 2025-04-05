@@ -10,14 +10,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 class AuthViewModel : BaseViewModel() {
-    private val authManager = FirebaseAuthManager()
 
-    var childId = mutableStateOf("")
 
 
     suspend fun login(email: String, password: String, context: Context): Result<String> {
         return withContext(Dispatchers.IO) {
-            authManager.login(email, password, context)
+            firebaseManager.login(email, password, context)
         }
     }
 
@@ -28,12 +26,12 @@ class AuthViewModel : BaseViewModel() {
         context: Context
     ): Result<String> {
         return withContext(Dispatchers.IO) {
-            authManager.signUpParent(email, password, name, context)
+            firebaseManager.signUpParent(email, password, name, context)
         }
     }
 
     fun logOut() {
-        authManager.logOut()
+        firebaseManager.logOut()
     }
 
     suspend fun saveUser(
@@ -46,7 +44,7 @@ class AuthViewModel : BaseViewModel() {
         context: Context
     ): Result<String> {
         return withContext(Dispatchers.IO) {
-            authManager.saveNewChildData(context, parentId, name, age, username, password, imageUri)
+            firebaseManager.saveNewChildData(context, parentId, name, age, username, password, imageUri)
         }
     }
 
@@ -56,13 +54,13 @@ class AuthViewModel : BaseViewModel() {
         context: Context
     ): Result<ChildData> {
         return withContext(Dispatchers.IO) {
-            authManager.childLogin(username, password, context)
+            firebaseManager.childLogin(username, password, context)
         }
     }
 
     suspend fun getChildList(): List<ChildData> {
         return withContext(Dispatchers.IO) {
-            authManager.getChildrenList()
+            firebaseManager.getChildrenList()
         }
     }
 }

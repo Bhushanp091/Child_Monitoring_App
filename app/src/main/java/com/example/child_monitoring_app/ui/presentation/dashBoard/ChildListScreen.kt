@@ -79,6 +79,7 @@ fun ChildListScreen(
             children.forEach { it ->
                 ChildProfileCard(it) { childId ->
                     authViewModel.childId.value = childId
+                    authViewModel.childUserName.value = childId
                     onClickNavigate()
                 }
             }

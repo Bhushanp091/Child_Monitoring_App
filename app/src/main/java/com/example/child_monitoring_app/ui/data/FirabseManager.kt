@@ -18,6 +18,7 @@ import com.example.child_monitoring_app.ui.data.callHistory.getContacts
 import com.example.child_monitoring_app.ui.domain.model.ChildData
 import com.example.child_monitoring_app.ui.presentation.appUsage.AppUsageInfo
 import com.example.child_monitoring_app.ui.presentation.appUsage.CallLogModel
+import com.google.android.gms.maps.model.LatLng
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
@@ -39,18 +40,23 @@ class FirebaseAuthManager() {
                 authResult.user?.uid ?: return Result.failure(Exception("User ID not found"))
 
             SharedPreference.saveParentIdLocally(context, parentId)
-            SharedPreference.saveLoginState(context,true)
+            SharedPreference.saveLoginState(context, true)
             Result.success("Login successful")
         } catch (e: Exception) {
             Result.failure(e)
         }
     }
 
-    fun logOut(){
+    fun logOut() {
         FirebaseAuth.getInstance().signOut()
     }
 
-    suspend fun signUpParent(email: String, password: String, name: String,context: Context): Result<String> {
+    suspend fun signUpParent(
+        email: String,
+        password: String,
+        name: String,
+        context: Context
+    ): Result<String> {
         return try {
             val authResult = auth.createUserWithEmailAndPassword(email, password).await()
             val parentId =
@@ -63,7 +69,7 @@ class FirebaseAuthManager() {
             )
 
             firestore.collection("parents").document(parentId).set(parentData).await()
-            SharedPreference.saveLoginState(context,true)
+            SharedPreference.saveLoginState(context, true)
             Result.success("Parent signup successful")
         } catch (e: Exception) {
             println("Sign Up Failed $e")
@@ -353,7 +359,6 @@ class FirebaseAuthManager() {
     }
 
 
-
     suspend fun uploadContactsToFirebase(context: Context, username: String) {
         val callLogs = getContacts(context)
         println("Contacts $callLogs")
@@ -424,7 +429,7 @@ class FirebaseAuthManager() {
                     val callLogs = callLogsList?.map { log ->
                         Contact(
                             name = log["name"] as? String ?: "",
-                            id =  log["id"] as? String ?: "",
+                            id = log["id"] as? String ?: "",
                             phoneNumber = log["phoneNumber"] as? String ?: ""
                         )
                     } ?: emptyList()
@@ -435,8 +440,122 @@ class FirebaseAuthManager() {
                     onResult(emptyList())
                 }
             }
-            .addOnFailureListener { Log.e("Firebase", "Error fetching call contacts: ${it.message}") }
+            .addOnFailureListener {
+                Log.e(
+                    "Firebase",
+                    "Error fetching call contacts: ${it.message}"
+                )
+            }
     }
+
+
+    fun uploadChildLocationToFirebase(childId: String, location: LatLng) {
+        firestore.collection("parents")
+            .get()
+            .addOnSuccessListener { parentSnapshot ->
+                for (parentDoc in parentSnapshot.documents) {
+                    val parentId = parentDoc.id
+                    firestore.collection("parents").document(parentId)
+                        .collection("children")
+                        .whereEqualTo("username", childId)
+                        .get()
+                        .addOnSuccessListener { childSnapshot ->
+                            if (!childSnapshot.isEmpty) {
+                                val childDoc = childSnapshot.documents[0]
+                                val child = childDoc.id
+                                val locationData = hashMapOf(
+                                    "latitude" to location.latitude,
+                                    "longitude" to location.longitude,
+                                    "timestamp" to System.currentTimeMillis()
+                                )
+                                firestore.collection("parents").document(parentId)
+                                    .collection("children").document(childId)
+                                    .update("data.location", locationData)
+                                    .addOnSuccessListener {
+                                        Log.d("Firebase", "Location Updated successfully")
+                                    }
+                                    .addOnFailureListener {
+                                        Log.e("Firebase", "Error Updating Locaiton: ${it.message}")
+                                    }
+                            } else {
+                                Log.e("Firebase", "No child document found for username: $childId")
+                            }
+                        }
+                        .addOnFailureListener {
+                            Log.e("Firebase", "Error fetching child document: ${it.message}")
+                        }
+                }
+            }
+            .addOnFailureListener {
+                Log.e("Firebase", "Error fetching parent document: ${it.message}")
+            }
+    }
+
+
+//    fun fetchChildLocationFromFirebase(
+//        parentId: String,
+//        childId: String,
+//        onResult: (LatLng?) -> Unit
+//    ) {
+//        firestore.collection("parents").document(parentId)
+//            .collection("children").document(childId)
+//            .get()
+//            .addOnSuccessListener { document ->
+//                if (document.exists()) {
+//                    val locationData = document.get("data.location") as? Map<*, *>
+//                    val lat = locationData?.get("latitude") as? Double
+//                    val lng = locationData?.get("longitude") as? Double
+//
+//                    if (lat != null && lng != null) {
+//                        onResult(LatLng(lat, lng))
+//                    } else {
+//                        onResult(null)
+//                    }
+//                } else {
+//                    Log.e("Firebase", "Child document not found")
+//                }
+//            }
+//            .addOnFailureListener {
+//                Log.e(
+//                    "Firebase",
+//                    "Error fetching call contacts: ${it.message}"
+//                )
+//            }
+//    }
+fun fetchChildLocationFromFirebase(
+    parentId: String,
+    childUsername: String, // use username to find the child
+    onResult: (LatLng?) -> Unit
+) {
+    FirebaseFirestore.getInstance()
+        .collection("parents")
+        .document(parentId)
+        .collection("children")
+        .whereEqualTo("username", childUsername)
+        .get()
+        .addOnSuccessListener { querySnapshot ->
+            if (!querySnapshot.isEmpty) {
+                val childDoc = querySnapshot.documents[0]
+                val locationMap = childDoc.get("data.location") as? Map<*, *>
+                val lat = locationMap?.get("latitude") as? Double
+                val lng = locationMap?.get("longitude") as? Double
+
+                if (lat != null && lng != null) {
+                    onResult(LatLng(lat, lng))
+                } else {
+                    Log.e("Firebase", "Latitude or Longitude is null")
+                    onResult(null)
+                }
+            } else {
+                Log.e("Firebase", "No child found with username: $childUsername")
+                onResult(null)
+            }
+        }
+        .addOnFailureListener {
+            Log.e("Firebase", "Failed to fetch child: ${it.message}")
+            onResult(null)
+        }
+}
 
 
 
