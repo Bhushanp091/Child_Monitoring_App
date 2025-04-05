@@ -1,24 +1,11 @@
 package com.example.child_monitoring_app
 
-import android.annotation.SuppressLint
-import android.content.Intent
 import android.os.Bundle
-import android.os.Looper
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -26,7 +13,6 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.child_monitoring_app.ui.data.SharedPreference
-import com.example.child_monitoring_app.ui.data.location.LocationMapActivity
 import com.example.child_monitoring_app.ui.presentation.addChild.AddChildScreen
 import com.example.child_monitoring_app.ui.presentation.appUsage.AppUsageScreen
 import com.example.child_monitoring_app.ui.presentation.appUsage.AppUsageViewModel
@@ -45,22 +31,7 @@ import com.example.child_monitoring_app.ui.presentation.login.ParentChildSelecti
 import com.example.child_monitoring_app.ui.presentation.login.child_login.ChildLoginScreen
 import com.example.child_monitoring_app.ui.presentation.login.ui.ParentLoginScreen
 import com.example.child_monitoring_app.ui.presentation.login.ui.ParentSignupScreen
-import com.google.accompanist.permissions.ExperimentalPermissionsApi
-import com.google.accompanist.permissions.rememberMultiplePermissionsState
-import com.google.android.gms.location.FusedLocationProviderClient
-import com.google.android.gms.location.LocationCallback
-import com.google.android.gms.location.LocationRequest
-import com.google.android.gms.location.LocationResult
-import com.google.android.gms.location.LocationServices
-import com.google.android.gms.location.Priority
-import com.google.android.gms.maps.CameraUpdateFactory
-import com.google.android.gms.maps.model.CameraPosition
-import com.google.android.gms.maps.model.LatLng
-import com.google.maps.android.compose.GoogleMap
-import com.google.maps.android.compose.MapProperties
-import com.google.maps.android.compose.Marker
-import com.google.maps.android.compose.rememberCameraPositionState
-import network.chaintech.sdpcomposemultiplatform.sdp
+
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -73,10 +44,8 @@ class MainActivity : ComponentActivity() {
 }
 
 
-
 @Composable
 fun Navigation() {
-
 
     val navController = rememberNavController()
     val appUsageViewModel: AppUsageViewModel = viewModel()
@@ -85,14 +54,15 @@ fun Navigation() {
     val context = LocalContext.current
 
 
+    val startDestinationId = if (SharedPreference.isUserLoggedIn(context)) {
+        Screen.ShowChildList.route
+    } else {
+        Screen.PreLogin.route
+    }
 
     NavHost(
         navController = navController,
-        startDestination = if (SharedPreference.isUserLoggedIn(context)) {
-            Screen.ShowChildList.route
-        } else {
-            Screen.PreLogin.route
-        }
+        startDestination = startDestinationId
 //        startDestination = Screen.PreLogin.route
 //        startDestination = Screen.DashBoard.route
     ) {
@@ -124,7 +94,7 @@ fun Navigation() {
                 navController,
                 "DashBoard",
                 showFloatingButton = true,
-                showBackButton = false
+                showBackButton = true
             ) {
                 DashBoardMainScreen(
                     Modifier.padding(it),
@@ -137,7 +107,7 @@ fun Navigation() {
 
         composable(Screen.AddChild.route) {
             MainScaffold(navController, "Add Child") {
-                AddChildScreen(authViewModel){
+                AddChildScreen(authViewModel) {
                     navController.popBackStack()
                 }
             }
@@ -174,20 +144,20 @@ fun Navigation() {
         }
 
         composable(Screen.LocationScreen.route) {
-            MainScaffold(navController,"Child Location") {
-                ChildLocationMap(locationViewModel,authViewModel)
+            MainScaffold(navController, "Child Location") {
+                ChildLocationMap(locationViewModel, authViewModel)
             }
         }
 
         composable(Screen.ChildLocationScreen.route) {
-            MainScaffold(navController,"Your Location") {
+            MainScaffold(navController, "Your Location") {
                 ShowLocationScreen(locationViewModel)
             }
         }
 
         composable(Screen.ChildDashBoard.route) {
             MainScaffold(navController, "DashBoard") {
-                ChildDashBoardScreen(navController,authViewModel)
+                ChildDashBoardScreen(navController, authViewModel)
             }
         }
 

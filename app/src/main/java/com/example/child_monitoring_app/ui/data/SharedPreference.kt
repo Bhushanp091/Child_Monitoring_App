@@ -25,14 +25,27 @@ object SharedPreference {
     }
 
 
-    fun saveLoginState(context: Context, isLoggedIn: Boolean) {
+    fun saveParentLoginState(context: Context, isLoggedIn: Boolean) {
         val sharedPref = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
-        sharedPref.edit().putBoolean(KEY_IS_LOGGED_IN, isLoggedIn).apply()
+        sharedPref.edit().putBoolean(PARENT_IS_LOGGED_IN, isLoggedIn).apply()
+//        sharedPref.edit().putBoolean(CHILD_IS_LOGGED_IN, false).apply()
     }
+
+    fun saveChildLoginState(context: Context, isLoggedIn: Boolean) {
+        val sharedPref = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+//        sharedPref.edit().putBoolean(PARENT_IS_LOGGED_IN, false).apply()
+        sharedPref.edit().putBoolean(CHILD_IS_LOGGED_IN, isLoggedIn).apply()
+    }
+
 
     fun isUserLoggedIn(context: Context): Boolean {
         val sharedPref = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
-        return sharedPref.getBoolean(KEY_IS_LOGGED_IN, false)
+        return sharedPref.getBoolean(PARENT_IS_LOGGED_IN, false)
+    }
+
+    fun isChildLoggedIn(context: Context):Boolean{
+        val sharedPref = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+        return sharedPref.getBoolean(CHILD_IS_LOGGED_IN, false)
     }
 
     fun logout(context: Context) {
@@ -44,6 +57,7 @@ object SharedPreference {
     private const val PREF_NAME = "ChildMonitorPrefs"
     private const val KEY_PARENT_ID = "parentId"
     private const val KEY_CHILD_ID = "child_id"
-    private const val KEY_IS_LOGGED_IN = "isLoggedIn"
+    private const val PARENT_IS_LOGGED_IN = "isLoggedIn"
+    private const val CHILD_IS_LOGGED_IN = "isLoggedIn"
 
 }

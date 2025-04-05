@@ -4,12 +4,9 @@ import android.app.usage.UsageStatsManager
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.graphics.ImageDecoder
 import android.net.Uri
-import android.os.Build
 import android.util.Base64
 import android.util.Log
-import androidx.annotation.RequiresApi
 import androidx.compose.runtime.mutableStateOf
 import com.example.child_monitoring_app.ui.data.appUsage.getAppUsageStats
 import com.example.child_monitoring_app.ui.data.callHistory.Contact
@@ -27,6 +24,7 @@ import java.io.ByteArrayOutputStream
 import java.util.Calendar
 
 class FirebaseAuthManager() {
+
     private val auth: FirebaseAuth = FirebaseAuth.getInstance()
     private val firestore = FirebaseFirestore.getInstance()
     private val storage = FirebaseStorage.getInstance().reference
@@ -40,7 +38,7 @@ class FirebaseAuthManager() {
                 authResult.user?.uid ?: return Result.failure(Exception("User ID not found"))
 
             SharedPreference.saveParentIdLocally(context, parentId)
-            SharedPreference.saveLoginState(context, true)
+            SharedPreference.saveParentLoginState(context, true)
             Result.success("Login successful")
         } catch (e: Exception) {
             Result.failure(e)
@@ -69,7 +67,7 @@ class FirebaseAuthManager() {
             )
 
             firestore.collection("parents").document(parentId).set(parentData).await()
-            SharedPreference.saveLoginState(context, true)
+            SharedPreference.saveParentLoginState(context, true)
             Result.success("Parent signup successful")
         } catch (e: Exception) {
             println("Sign Up Failed $e")
@@ -173,6 +171,7 @@ class FirebaseAuthManager() {
                 val child = snapshot.documents[0].toObject(ChildData::class.java)
                 val childId = document.id
                 SharedPreference.saveChildIdLocally(context, childId)//saving child id here
+                SharedPreference.saveChildLoginState(context, true)
                 return Result.success(child!!)
             }
         }
@@ -492,7 +491,7 @@ class FirebaseAuthManager() {
     }
 
 
-//    fun fetchChildLocationFromFirebase(
+    //    fun fetchChildLocationFromFirebase(
 //        parentId: String,
 //        childId: String,
 //        onResult: (LatLng?) -> Unit
@@ -522,42 +521,40 @@ class FirebaseAuthManager() {
 //                )
 //            }
 //    }
-fun fetchChildLocationFromFirebase(
-    parentId: String,
-    childUsername: String, // use username to find the child
-    onResult: (LatLng?) -> Unit
-) {
-    FirebaseFirestore.getInstance()
-        .collection("parents")
-        .document(parentId)
-        .collection("children")
-        .whereEqualTo("username", childUsername)
-        .get()
-        .addOnSuccessListener { querySnapshot ->
-            if (!querySnapshot.isEmpty) {
-                val childDoc = querySnapshot.documents[0]
-                val locationMap = childDoc.get("data.location") as? Map<*, *>
-                val lat = locationMap?.get("latitude") as? Double
-                val lng = locationMap?.get("longitude") as? Double
+    fun fetchChildLocationFromFirebase(
+        parentId: String,
+        childUsername: String, // use username to find the child
+        onResult: (LatLng?) -> Unit
+    ) {
+        FirebaseFirestore.getInstance()
+            .collection("parents")
+            .document(parentId)
+            .collection("children")
+            .whereEqualTo("username", childUsername)
+            .get()
+            .addOnSuccessListener { querySnapshot ->
+                if (!querySnapshot.isEmpty) {
+                    val childDoc = querySnapshot.documents[0]
+                    val locationMap = childDoc.get("data.location") as? Map<*, *>
+                    val lat = locationMap?.get("latitude") as? Double
+                    val lng = locationMap?.get("longitude") as? Double
 
-                if (lat != null && lng != null) {
-                    onResult(LatLng(lat, lng))
+                    if (lat != null && lng != null) {
+                        onResult(LatLng(lat, lng))
+                    } else {
+                        Log.e("Firebase", "Latitude or Longitude is null")
+                        onResult(null)
+                    }
                 } else {
-                    Log.e("Firebase", "Latitude or Longitude is null")
+                    Log.e("Firebase", "No child found with username: $childUsername")
                     onResult(null)
                 }
-            } else {
-                Log.e("Firebase", "No child found with username: $childUsername")
+            }
+            .addOnFailureListener {
+                Log.e("Firebase", "Failed to fetch child: ${it.message}")
                 onResult(null)
             }
-        }
-        .addOnFailureListener {
-            Log.e("Firebase", "Failed to fetch child: ${it.message}")
-            onResult(null)
-        }
-}
-
-
+    }
 
 
 }

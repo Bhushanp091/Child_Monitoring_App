@@ -33,7 +33,6 @@ fun ChildDashBoardScreen(navController: NavController,authViewModel: AuthViewMod
         CommonButton(
             text = "Hmmmmmmmmmmmmmmmm :)",
             onClick = {
-                println("Firebase store child data")
                 authViewModel.storeChildData(context, childLocation,childId)
             }
         )
@@ -41,8 +40,18 @@ fun ChildDashBoardScreen(navController: NavController,authViewModel: AuthViewMod
         CommonButton(
             text = "Get Location",
             onClick = {
-                println("Show Location")
                 navController.navigate(Screen.ChildLocationScreen.route)
+            }
+        )
+        Spacer(modifier = Modifier.padding(10.sdp))
+        CommonButton(
+            text = "Log out Child",
+            onClick = {
+                SharedPreference.logout(context)
+                authViewModel.logOut()
+                navController.navigate(Screen.PreLogin.route) {
+                    popUpTo(Screen.ChildDashBoard.route) { inclusive = true }
+                }
             }
         )
     }
