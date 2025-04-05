@@ -1,8 +1,14 @@
-package com.example.child_monitoring_app.ui.presentation.login.ui
+package com.example.child_monitoring_app.ui.presentation.login.parent_login
 
 import androidx.compose.foundation.clickable
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.navigation.NavController
+import com.example.child_monitoring_app.ui.presentation.login.AuthViewModel
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
@@ -10,8 +16,9 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -25,45 +32,38 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavController
 import com.example.child_monitoring_app.R
 import com.example.child_monitoring_app.Screen
 import com.example.child_monitoring_app.ui.presentation.component.ToastType
 import com.example.child_monitoring_app.ui.presentation.component.toast
-import com.example.child_monitoring_app.ui.presentation.login.AuthViewModel
 import com.example.child_monitoring_app.ui.theme.buttonColor
 import kotlinx.coroutines.launch
 
 
-
 @Composable
-fun ParentLoginScreen(
+fun ParentSignupScreen(
     authViewModel: AuthViewModel,
-    navController: NavController
+    navController: NavController,
 ) {
+    var name by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
-    var name by remember { mutableStateOf("") }
+    var confirmPassword by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
-    val keyboardController = LocalSoftwareKeyboardController.current
-    val coroutineScope = rememberCoroutineScope()
-    var isSignUp by remember { mutableStateOf(false) }
     var message by remember { mutableStateOf("") }
-    var isLogIn by remember { mutableStateOf(false) }
+    var confirmPasswordVisible by remember { mutableStateOf(false) }
+    val keyboardController = LocalSoftwareKeyboardController.current
     val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+    val image = if (passwordVisible)
+        R.drawable.eye
+    else R.drawable.eye_slash
 
-
-    LaunchedEffect(isLogIn) {
-        if (isLogIn) {
-            navController.navigate(Screen.ShowChildList.route)
+    LaunchedEffect(message) {
+        if (message == "Login successful") {
+            navController.navigate(Screen.ChildDashBoard.route)
         }
     }
-
-//    LaunchedEffect(message) {
-//        if (message == "Login successful") {
-//            navController.navigate(Screen.ChildDashBoard.route)
-//        }
-//    }
 
     Box(
         modifier = Modifier
@@ -94,15 +94,36 @@ fun ParentLoginScreen(
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 Text(
-                    text = "Welcome Back",
+                    text = "Create Account",
                     style = MaterialTheme.typography.headlineMedium,
                     color = MaterialTheme.colorScheme.primary
                 )
 
                 Text(
-                    text = "Sign in to continue",
+                    text = "Sign up to get started",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                // Name TextField
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    label = { Text("Full Name") },
+                    placeholder = { Text("Enter your full name") },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Default.Person,
+                            contentDescription = "Name Icon"
+                        )
+                    },
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Text,
+                        imeAction = ImeAction.Next
+                    ),
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    shape = RoundedCornerShape(12.dp)
                 )
 
                 // Email TextField
@@ -131,7 +152,7 @@ fun ParentLoginScreen(
                     value = password,
                     onValueChange = { password = it },
                     label = { Text("Password") },
-                    placeholder = { Text("Enter your password") },
+                    placeholder = { Text("Create a strong password") },
                     leadingIcon = {
                         Icon(
                             imageVector = Icons.Default.Lock,
@@ -139,18 +160,55 @@ fun ParentLoginScreen(
                         )
                     },
                     trailingIcon = {
-                        val image = if (passwordVisible)
-                            R.drawable.eye
-                        else R.drawable.eye_slash
-                        Icon(
-                            painter = painterResource(image),
-                            modifier = Modifier.clickable {
-                                passwordVisible = !passwordVisible
-                            },
-                            contentDescription = "Toggle password visibility"
-                        )
+                        IconButton(onClick = {
+                            passwordVisible = !passwordVisible
+                        }) {
+                            Icon(
+                                painter = painterResource(image),
+                                contentDescription = "Toggle password visibility"
+                            )
+                        }
                     },
                     visualTransformation = if (passwordVisible)
+                        VisualTransformation.None
+                    else
+                        PasswordVisualTransformation(),
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Password,
+                        imeAction = ImeAction.Next
+                    ),
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    shape = RoundedCornerShape(12.dp)
+                )
+
+                // Confirm Password TextField
+                OutlinedTextField(
+                    value = confirmPassword,
+                    onValueChange = { confirmPassword = it },
+                    label = { Text("Confirm Password") },
+                    placeholder = { Text("Repeat your password") },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Default.Lock,
+                            contentDescription = "Confirm Password Icon"
+                        )
+                    },
+                    trailingIcon = {
+                        val image = if (confirmPasswordVisible)
+                            Icons.Filled.Add
+                        else Icons.Filled.Info
+
+                        IconButton(onClick = {
+                            confirmPasswordVisible = !confirmPasswordVisible
+                        }) {
+                            Icon(
+                                imageVector = image,
+                                contentDescription = "Toggle confirm password visibility"
+                            )
+                        }
+                    },
+                    visualTransformation = if (confirmPasswordVisible)
                         VisualTransformation.None
                     else
                         PasswordVisualTransformation(),
@@ -160,7 +218,7 @@ fun ParentLoginScreen(
                     ),
                     keyboardActions = KeyboardActions(
                         onDone = {
-                            // Perform login action
+                            // Perform sign up action
                             keyboardController?.hide()
                         }
                     ),
@@ -169,34 +227,17 @@ fun ParentLoginScreen(
                     shape = RoundedCornerShape(12.dp)
                 )
 
-                // Forgot Password
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End
-                ) {
-                    TextButton(onClick = {
-                        // Navigate to forgot password screen
-                    }) {
-                        Text("Forgot Password?")
-                    }
-                }
-
-                // Login Button
+                // Sign Up Button
                 Button(
                     onClick = {
-                        if (email.isNotEmpty() && password.isNotEmpty()) {
+                        if (name.isNotEmpty() && email.isNotEmpty() && password.isNotEmpty() && confirmPassword.isNotEmpty()) {
                             coroutineScope.launch {
-                                val result =
-                                    if (isSignUp) authViewModel.signUp(email, password, name,context)
-                                    else authViewModel.login(email, password, context)
-                                message = result.getOrDefault("Wrong Credentials")
+                                val result = authViewModel.signUp(email, password, name,context)
+                                message = result.getOrDefault("Signup failed")
                                 context.toast(message, ToastType.ERROR)
-                                if (message != "Wrong Credentials") {
-                                    isLogIn = true
-                                }
                             }
                         } else {
-                            context.toast("Enter all field", ToastType.ERROR)
+                            context.toast("Enter all fields", ToastType.ERROR)
                         }
                     },
                     modifier = Modifier
@@ -210,24 +251,23 @@ fun ParentLoginScreen(
                     ),
                     shape = RoundedCornerShape(12.dp)
                 ) {
-                    Text("Login")
+                    Text("Sign Up")
                 }
 
-                // Sign Up Prompt
+                // Login Prompt
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.Center
                 ) {
                     Text(
-                        text = "Don't have an account? ",
+                        text = "Already have an account? ",
                         style = MaterialTheme.typography.bodyMedium
                     )
-                    Text(
-                        "Register yourself",
-                        Modifier.clickable { navController.navigate(Screen.SignUp.route) })
 
+                    Text(
+                        "Log In",
+                        Modifier.clickable { navController.navigate(Screen.ParentLogin.route) })
                 }
-                Text(text = message, color = MaterialTheme.colorScheme.error)
             }
         }
     }

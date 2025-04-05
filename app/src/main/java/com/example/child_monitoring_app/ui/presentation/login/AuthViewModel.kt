@@ -1,8 +1,10 @@
 package com.example.child_monitoring_app.ui.presentation.login
 
+import android.app.Application
 import android.content.Context
 import android.net.Uri
 import androidx.compose.runtime.mutableStateOf
+import androidx.lifecycle.AndroidViewModel
 import com.example.child_monitoring_app.ui.domain.model.ChildData
 import com.example.child_monitoring_app.ui.data.FirebaseAuthManager
 import com.example.child_monitoring_app.ui.presentation.BaseViewModel
@@ -10,8 +12,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 class AuthViewModel : BaseViewModel() {
-
-
 
     suspend fun login(email: String, password: String, context: Context): Result<String> {
         return withContext(Dispatchers.IO) {

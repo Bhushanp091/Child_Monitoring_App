@@ -33,12 +33,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.fragment.app.FragmentActivity
 import com.example.child_monitoring_app.R
+import com.example.child_monitoring_app.ui.data.BiometricAuthUtil
 import com.example.child_monitoring_app.ui.domain.decodeBase64ToBitmap
 import com.example.child_monitoring_app.ui.domain.model.ChildData
+import com.example.child_monitoring_app.ui.presentation.component.toast
 import com.example.child_monitoring_app.ui.presentation.login.AuthViewModel
 import kotlinx.coroutines.launch
 
@@ -52,8 +56,31 @@ fun ChildListScreen(
     var isLoading by remember { mutableStateOf(true) }
     var errorMessage by remember { mutableStateOf("") }
     val scrollState = rememberScrollState()
-
+    val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
+    val biometricAuthUtil = remember { BiometricAuthUtil(context) }
+    val isBiometricAvailable = remember { biometricAuthUtil.canAuthenticate() }
+    var authStatus by remember { mutableStateOf("Not authenticated") }
+    val biometricStatus = remember { biometricAuthUtil.getBiometricAvailabilityStatus() }
+
+    LaunchedEffect(Unit) {
+        if (isBiometricAvailable) {
+            biometricAuthUtil.showBiometricPrompt(
+                activity = context as FragmentActivity,
+                onSuccess = {
+                    authStatus = "Authentication successful"
+                },
+                onError = { errorCode, errorMessage ->
+                    authStatus = "Authentication error: $errorMessage"
+                },
+                onFailed = {
+                    authStatus = "Authentication failed. Please try again."
+                }
+            )
+        } else {
+            context.toast("Biometric authentication is not available")
+        }
+    }
 
     LaunchedEffect(Unit) {
         coroutineScope.launch {
@@ -68,8 +95,10 @@ fun ChildListScreen(
         }
     }
 
-    Column (
-        modifier = modifier.fillMaxSize().verticalScroll(scrollState)
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .verticalScroll(scrollState)
     ) {
         if (isLoading) {
             Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -141,7 +170,9 @@ fun ProfileImage(base64String: String) {
         Image(
             bitmap = bitmap.asImageBitmap(),
             contentDescription = "Profile Picture",
-            modifier = Modifier.size(100.dp).clip(CircleShape)
+            modifier = Modifier
+                .size(100.dp)
+                .clip(CircleShape)
         )
     } else {
         Image(
@@ -151,5 +182,6 @@ fun ProfileImage(base64String: String) {
                 .size(80.dp)
                 .clip(CircleShape),
             contentScale = ContentScale.Crop
-        )    }
+        )
+    }
 }

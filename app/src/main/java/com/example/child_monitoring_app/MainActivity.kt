@@ -8,10 +8,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.example.child_monitoring_app.ui.data.BiometricScreen
 import com.example.child_monitoring_app.ui.data.SharedPreference
 import com.example.child_monitoring_app.ui.presentation.addChild.AddChildScreen
 import com.example.child_monitoring_app.ui.presentation.appUsage.AppUsageScreen
@@ -29,11 +31,11 @@ import com.example.child_monitoring_app.ui.presentation.location.ShowLocationScr
 import com.example.child_monitoring_app.ui.presentation.login.AuthViewModel
 import com.example.child_monitoring_app.ui.presentation.login.ParentChildSelectionScreen
 import com.example.child_monitoring_app.ui.presentation.login.child_login.ChildLoginScreen
-import com.example.child_monitoring_app.ui.presentation.login.ui.ParentLoginScreen
-import com.example.child_monitoring_app.ui.presentation.login.ui.ParentSignupScreen
+import com.example.child_monitoring_app.ui.presentation.login.parent_login.ParentLoginScreen
+import com.example.child_monitoring_app.ui.presentation.login.parent_login.ParentSignupScreen
 
 
-class MainActivity : ComponentActivity() {
+class MainActivity : FragmentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -172,7 +174,9 @@ fun Navigation() {
         }
 
         composable(Screen.BrowserHistory.route) {
-            BrowserHistoryScreen()
+            MainScaffold(navController, "Browser History") {
+                BrowserHistoryScreen()
+            }
         }
     }
 }

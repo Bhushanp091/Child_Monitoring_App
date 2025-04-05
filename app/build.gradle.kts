@@ -77,4 +77,7 @@ dependencies {
     implementation ("com.google.android.gms:play-services-maps:18.2.0")
     implementation ("com.google.accompanist:accompanist-permissions:0.33.2-alpha")
 
+    implementation ("androidx.biometric:biometric:1.2.0-alpha03")
+
+
 }
