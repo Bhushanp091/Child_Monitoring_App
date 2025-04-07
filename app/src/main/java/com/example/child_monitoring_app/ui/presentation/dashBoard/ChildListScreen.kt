@@ -58,29 +58,7 @@ fun ChildListScreen(
     val scrollState = rememberScrollState()
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
-    val biometricAuthUtil = remember { BiometricAuthUtil(context) }
-    val isBiometricAvailable = remember { biometricAuthUtil.canAuthenticate() }
-    var authStatus by remember { mutableStateOf("Not authenticated") }
-    val biometricStatus = remember { biometricAuthUtil.getBiometricAvailabilityStatus() }
 
-    LaunchedEffect(Unit) {
-        if (isBiometricAvailable) {
-            biometricAuthUtil.showBiometricPrompt(
-                activity = context as FragmentActivity,
-                onSuccess = {
-                    authStatus = "Authentication successful"
-                },
-                onError = { errorCode, errorMessage ->
-                    authStatus = "Authentication error: $errorMessage"
-                },
-                onFailed = {
-                    authStatus = "Authentication failed. Please try again."
-                }
-            )
-        } else {
-            context.toast("Biometric authentication is not available")
-        }
-    }
 
     LaunchedEffect(Unit) {
         coroutineScope.launch {

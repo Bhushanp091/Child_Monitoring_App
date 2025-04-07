@@ -7,9 +7,7 @@ import androidx.biometric.BiometricPrompt
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
 
-/**
- * Utility class to handle biometric authentication
- */
+/*** Utility class to handle biometric authentication***/
 class BiometricAuthUtil(private val context: Context) {
 
     // Check if biometric authentication is available on the device

@@ -13,7 +13,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.example.child_monitoring_app.ui.data.BiometricScreen
 import com.example.child_monitoring_app.ui.data.SharedPreference
 import com.example.child_monitoring_app.ui.presentation.addChild.AddChildScreen
 import com.example.child_monitoring_app.ui.presentation.appUsage.AppUsageScreen
@@ -29,6 +28,7 @@ import com.example.child_monitoring_app.ui.presentation.location.ChildLocationMa
 import com.example.child_monitoring_app.ui.presentation.location.LocationViewModel
 import com.example.child_monitoring_app.ui.presentation.location.ShowLocationScreen
 import com.example.child_monitoring_app.ui.presentation.login.AuthViewModel
+import com.example.child_monitoring_app.ui.presentation.login.FingerPrintScreen
 import com.example.child_monitoring_app.ui.presentation.login.ParentChildSelectionScreen
 import com.example.child_monitoring_app.ui.presentation.login.child_login.ChildLoginScreen
 import com.example.child_monitoring_app.ui.presentation.login.parent_login.ParentLoginScreen
@@ -57,7 +57,7 @@ fun Navigation() {
 
 
     val startDestinationId = if (SharedPreference.isUserLoggedIn(context)) {
-        Screen.ShowChildList.route
+        Screen.FingerPrint.route
     } else {
         Screen.PreLogin.route
     }
@@ -178,12 +178,19 @@ fun Navigation() {
                 BrowserHistoryScreen()
             }
         }
+
+        composable(Screen.FingerPrint.route) {
+            FingerPrintScreen {
+                navController.navigate(Screen.ShowChildList.route)
+            }
+        }
     }
 }
 
 
 sealed class Screen(val route: String) {
     object DashBoard : Screen("dash_board")
+    object FingerPrint : Screen("fingerprint")
     object ChildDashBoard : Screen("child_dash_board")
     object CallHistory : Screen("call_history")
     object AppUsage : Screen("app_usage")
