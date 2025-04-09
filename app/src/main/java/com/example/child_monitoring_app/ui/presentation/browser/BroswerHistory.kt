@@ -1,5 +1,6 @@
 package com.example.child_monitoring_app.ui.presentation.browser
 
+import android.content.Context
 import android.content.Intent
 import android.provider.Settings
 import androidx.compose.foundation.layout.Arrangement
@@ -31,3 +32,16 @@ fun BrowserHistoryScreen(modifier: Modifier = Modifier) {
         )
     }
 }
+//fun requestDrawOverAppsPermission(context: Context) {
+//    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+//        if (!Settings.canDrawOverlays(context)) {
+//            val intent = Intent(
+//                Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+//                Uri.parse("package:${context.packageName}")
+//            )
+//            context.startActivity(intent)
+//        } else {
+//            Toast.makeText(context, "Overlay permission already granted", Toast.LENGTH_SHORT).show()
+//        }
+//    }
+//}

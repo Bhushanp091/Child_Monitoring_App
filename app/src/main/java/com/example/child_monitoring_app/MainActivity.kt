@@ -6,8 +6,14 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import android.content.Intent
+import android.provider.Settings
+import android.util.Log
+import android.widget.Toast
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.core.content.ContextCompat
+import androidx.core.content.ContextCompat.startActivity
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
@@ -41,9 +47,36 @@ class MainActivity : FragmentActivity() {
         enableEdgeToEdge()
         setContent {
             Navigation()
+//            if(!checkAccessibilityPermission()){
+//                Toast.makeText(this, "Permission denied", Toast.LENGTH_SHORT).show();
+//            }
+        }
+    }
+    fun checkAccessibilityPermission(): Boolean {
+        return try {
+            val accessibilityEnabled = Settings.Secure.getInt(
+                applicationContext.contentResolver,
+                Settings.Secure.ACCESSIBILITY_ENABLED
+            )
+            if (accessibilityEnabled == 0) {
+                // Accessibility service is NOT enabled, prompt the user
+                val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
+                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                false
+            } else {
+                // Accessibility service is already enabled
+                true
+            }
+        } catch (e: Settings.SettingNotFoundException) {
+            e.printStackTrace()
+            false
         }
     }
 }
+
+
+
+
 
 
 @Composable
