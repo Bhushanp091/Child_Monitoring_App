@@ -16,8 +16,12 @@
 
     <uses-permission android:name="android.permission.USE_BIOMETRIC" />
 
-    <!-- For devices running Android 9.0 (API level 28) and below -->
     <uses-permission android:name="android.permission.USE_FINGERPRINT" android:maxSdkVersion="28" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+    <uses-permission android:name="android.permission.BIND_ACCESSIBILITY_SERVICE" />
+
 
 
     <application
@@ -42,9 +46,21 @@
             </intent-filter>
 
         </activity>
-        <meta-data
-            android:name="com.google.android.geo.API_KEY"
-            android:value="AIzaSyAJ0f6gCfjPfDnzoSNXqs-eth6LC36-9DM" />
+
+        <service
+            android:name=".ui.presentation.browser.UrlLoggingService"
+            android:exported="true"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
+            android:label="@string/accessibility_service_description">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/accessibility_service_config" />
+        </service>
+
     </application>
+
 
 </manifest>

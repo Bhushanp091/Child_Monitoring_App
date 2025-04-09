@@ -65,7 +65,7 @@ fun Navigation() {
     NavHost(
         navController = navController,
         startDestination = startDestinationId
-//        startDestination = Screen.PreLogin.route
+//        startDestination = Screen.BrowserHistory.route
 //        startDestination = Screen.DashBoard.route
     ) {
 

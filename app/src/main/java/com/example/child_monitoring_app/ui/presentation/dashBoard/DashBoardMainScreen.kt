@@ -29,6 +29,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.child_monitoring_app.ui.data.SharedPreference
+import com.example.child_monitoring_app.ui.presentation.appUsage.AppLaunchScreen
 import com.example.child_monitoring_app.ui.presentation.appUsage.AppUsageViewModel
 import com.example.child_monitoring_app.ui.presentation.component.CommonButton
 
@@ -94,6 +95,8 @@ fun DashBoardMainScreen(
                 }
 
             }
+
+//            AppLaunchScreen()
 
             CommonButton(
                 text = "Log Out",
