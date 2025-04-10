@@ -33,6 +33,12 @@ import com.example.child_monitoring_app.ui.presentation.login.ParentChildSelecti
 import com.example.child_monitoring_app.ui.presentation.login.child_login.ChildLoginScreen
 import com.example.child_monitoring_app.ui.presentation.login.parent_login.ParentLoginScreen
 import com.example.child_monitoring_app.ui.presentation.login.parent_login.ParentSignupScreen
+import com.example.child_monitoring_app.ui.presentation.login.parent_login.OtpVerificationScreen
+import com.example.child_monitoring_app.ui.presentation.network.NetworkStatusTracker
+import androidx.compose.runtime.remember
+import com.example.child_monitoring_app.ui.presentation.network.NetworkStatusScreen
+
+
 
 
 class MainActivity : FragmentActivity() {
@@ -89,6 +95,11 @@ fun Navigation() {
             MainScaffold(navController, "Login") {
                 ParentLoginScreen(authViewModel, navController)
             }
+        }
+        // ✅ OTP Verification Screen
+        composable(Screen.OtpVerification.route) { backStackEntry ->
+            val email = backStackEntry.arguments?.getString("email") ?: ""
+            OtpVerificationScreen(email, navController, authViewModel)
         }
 
         composable(Screen.DashBoard.route) {
@@ -162,6 +173,20 @@ fun Navigation() {
                 ChildDashBoardScreen(navController, authViewModel)
             }
         }
+        composable(Screen.Battery.route) {
+            MainScaffold(navController, "Battery Status") {
+                com.example.child_monitoring_app.ui.presentation.battery.BatteryScreen()
+            }
+        }
+        composable(Screen.NetworkStatus.route) {
+            val context = LocalContext.current
+            val tracker = remember { NetworkStatusTracker(context) }
+            MainScaffold(navController, "Network Status") {
+                NetworkStatusScreen(tracker)
+            }
+        }
+
+
 
         composable(Screen.PhoneNumberList.route) {
             MainScaffold(navController, "Contact List") {
@@ -204,4 +229,11 @@ sealed class Screen(val route: String) {
     object ChildLocationScreen : Screen("child_location_screen")
     object PhoneNumberList : Screen("phone_number_list")
     object BrowserHistory : Screen("browser_history_list")
+    object Battery : Screen("battery_screen")
+    object NetworkStatus : Screen("network_status_screen")
+
+
+    object OtpVerification : Screen("otp_verification_screen/{email}") {
+        fun createRoute(email: String): String = "otp_verification_screen/$email"
+    }
 }

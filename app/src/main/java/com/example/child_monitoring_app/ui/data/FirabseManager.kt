@@ -2,11 +2,12 @@ package com.example.child_monitoring_app.ui.data
 
 import android.app.usage.UsageStatsManager
 import android.content.Context
+import android.widget.Toast
+import android.util.Log
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.util.Base64
-import android.util.Log
 import androidx.compose.runtime.mutableStateOf
 import com.example.child_monitoring_app.ui.data.appUsage.getAppUsageStats
 import com.example.child_monitoring_app.ui.data.callHistory.Contact
@@ -22,6 +23,9 @@ import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.tasks.await
 import java.io.ByteArrayOutputStream
 import java.util.Calendar
+import android.content.Intent
+
+
 
 class FirebaseAuthManager() {
 
@@ -555,6 +559,33 @@ class FirebaseAuthManager() {
                 onResult(null)
             }
     }
+
+    suspend fun sendOtpToEmail(email: String, otp: String, context: Context): Boolean {
+        return try {
+            val subject = "Your OTP for Login"
+            val message = "Your One Time Password (OTP) is: $otp\n\nIt is valid for 5 minutes."
+
+            // Firebase doesn't support sending custom emails directly.
+            // So we simulate this with an email intent or a backend-triggered email (e.g., using Cloud Functions).
+            // TEMP: You can trigger a custom backend, or just use this as a placeholder.
+            // Here’s a basic example using an email Intent (you might replace this with a real mail API):
+
+            val intent = Intent(Intent.ACTION_SEND).apply {
+                type = "text/plain"
+                putExtra(Intent.EXTRA_EMAIL, arrayOf(email))
+                putExtra(Intent.EXTRA_SUBJECT, subject)
+                putExtra(Intent.EXTRA_TEXT, message)
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            context.startActivity(Intent.createChooser(intent, "Send OTP Email"))
+            true
+        } catch (e: Exception) {
+            e.printStackTrace()
+            false
+        }
+    }
+
+
 
 
 }
