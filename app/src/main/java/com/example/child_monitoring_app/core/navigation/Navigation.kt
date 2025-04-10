@@ -17,6 +17,9 @@ import com.example.child_monitoring_app.features.call_log_history.PhoneNumberLis
 import com.example.child_monitoring_app.features.call_log_history.CallHistoryScreen
 import com.example.child_monitoring_app.features.browser_history.BrowserHistoryScreen
 import com.example.child_monitoring_app.core.common.MainScaffold
+import com.example.child_monitoring_app.core.permission.PermissionScreen
+import com.example.child_monitoring_app.features.app_blocker.screen.AppBlockerScreen
+import com.example.child_monitoring_app.features.app_blocker.screen.WebBlockerScreen
 import com.example.child_monitoring_app.features.child.ChildDashBoardScreen
 import com.example.child_monitoring_app.features.home.screen.ChildListScreen
 import com.example.child_monitoring_app.features.home.screen.HomeScreen
@@ -78,6 +81,28 @@ fun Navigation() {
             }
         }
 
+        composable(Screen.FingerPrint.route) {
+            FingerPrintScreen(
+                modifier = Modifier,
+                authViewModel = authViewModel
+            ) {
+                onNavigate(navController, it)
+            }
+        }
+
+        composable(Screen.ShowChildList.route) {
+            MainScaffold(
+                navController,
+                "Child List",
+                showFloatingButton = true,
+                showBackButton = false
+            ) {
+                ChildListScreen(authViewModel, homeViewModel, Modifier.padding(it)) { route ->
+                    onNavigate(navController, route)
+                }
+            }
+        }
+
         composable(Screen.DashBoard.route) {
             MainScaffold(
                 navController,
@@ -113,16 +138,12 @@ fun Navigation() {
             }
         }
 
-        composable(Screen.ShowChildList.route) {
-            MainScaffold(
-                navController,
-                "Child List",
-                showFloatingButton = true,
-                showBackButton = false
-            ) {
-                ChildListScreen(authViewModel, homeViewModel, Modifier.padding(it)) { route ->
-                    onNavigate(navController, route)
-                }
+        composable(Screen.PhoneNumberList.route) {
+            MainScaffold(navController, "Contact List") {
+                PhoneNumberList(
+                    modifier = Modifier.padding(it),
+                    appUsageViewModel = appUsageViewModel
+                )
             }
         }
 
@@ -144,27 +165,33 @@ fun Navigation() {
             }
         }
 
-        composable(Screen.PhoneNumberList.route) {
-            MainScaffold(navController, "Contact List") {
-                PhoneNumberList(
-                    modifier = Modifier.padding(it),
-                    appUsageViewModel = appUsageViewModel
-                )
-            }
-        }
-
         composable(Screen.BrowserHistory.route) {
             MainScaffold(navController, "Browser History") {
-                BrowserHistoryScreen()
+                BrowserHistoryScreen(Modifier.padding(it))
             }
         }
 
-        composable(Screen.FingerPrint.route) {
-            FingerPrintScreen(
-                modifier = Modifier,
-                authViewModel = authViewModel
-            ) {
-                navController.navigate(Screen.ShowChildList.route)
+        composable(Screen.AppBlocker.route) {
+            MainScaffold(navController, "Browser History") {
+                AppBlockerScreen(Modifier.padding(it))
+            }
+        }
+
+        composable(Screen.WebBlocker.route) {
+            MainScaffold(navController, "Browser History") {
+                WebBlockerScreen(Modifier.padding(it))
+            }
+        }
+
+
+        composable(Screen.AppLaunch.route) {
+            MainScaffold(navController, "Browser History") {
+                WebBlockerScreen(Modifier.padding(it))
+            }
+        }
+        composable(Screen.Permission.route) {
+            MainScaffold(navController, "Browser History") {
+                PermissionScreen(Modifier.padding(it))
             }
         }
     }
@@ -196,5 +223,9 @@ sealed class Screen(val route: String) {
     data object ChildLocationScreen : Screen("child_location_screen")
     data object PhoneNumberList : Screen("phone_number_list")
     data object BrowserHistory : Screen("browser_history_list")
+    data object AppBlocker : Screen("app_blocker")
+    data object WebBlocker : Screen("web_blocker")
+    data object AppLaunch : Screen("app_launch")
+    data object Permission : Screen("permission")
 }
 

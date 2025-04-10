@@ -28,6 +28,7 @@ import androidx.fragment.app.FragmentActivity
 import com.example.child_monitoring_app.R
 import com.example.child_monitoring_app.features.auth.BiometricAuthUtil
 import com.example.child_monitoring_app.core.common.toast
+import com.example.child_monitoring_app.core.navigation.Screen
 import com.example.child_monitoring_app.features.auth.AuthViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -38,8 +39,9 @@ import network.chaintech.sdpcomposemultiplatform.sdp
 fun FingerPrintScreen(
     modifier: Modifier = Modifier,
     authViewModel: AuthViewModel,
-    onNavigate: () -> Unit
+    onNavigate: (String) -> Unit
 ) = with(authViewModel){
+
     val context = LocalContext.current
     val biometricAuthUtil = remember { BiometricAuthUtil(context) }
     val isBiometricAvailable = remember { biometricAuthUtil.canAuthenticate() }
@@ -52,7 +54,7 @@ fun FingerPrintScreen(
             biometricAuthUtil.showBiometricPrompt(
                 activity = context as FragmentActivity,
                 onSuccess = {
-                    onNavigate()
+                    onNavigate(Screen.ShowChildList.route)
                     coroutineScope.launch(Dispatchers.Main) {
                         delay(1500L)
                     }
@@ -70,6 +72,7 @@ fun FingerPrintScreen(
                 }
             )
         } else {
+            onNavigate(Screen.ShowChildList.route)
             context.toast("Biometric authentication not available")
         }
     }
@@ -130,7 +133,7 @@ fun FingerPrintScreen(
                         onSuccess = {
                             authStatus.value = "Authentication successful"
                             isAuthenticating.value = false
-                            onNavigate()
+                            onNavigate(Screen.ShowChildList.route)
                         },
                         onError = { _, errorMessage ->
                             authStatus.value = "Error: $errorMessage"
