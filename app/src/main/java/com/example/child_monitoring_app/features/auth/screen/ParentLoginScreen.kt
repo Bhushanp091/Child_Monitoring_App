@@ -40,15 +40,9 @@ fun ParentLoginScreen(
     onNavigate:(String)->Unit
 ) = with(authViewModel){
 
-    navController: NavController
-) {
-    var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-    var passwordVisible by remember { mutableStateOf(false) }
     val keyboardController = LocalSoftwareKeyboardController.current
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
-    var message by remember { mutableStateOf("") }
 
     val biometricAuthUtil = remember { BiometricAuthUtil(context) }
     val isBiometricAvailable = remember { biometricAuthUtil.canAuthenticate() }
@@ -223,15 +217,13 @@ fun ParentLoginScreen(
                     Text(
                         "Register yourself",
                         modifier = Modifier.clickable {
-                            navController.navigate("signup_screen")
+                            onNavigate(Screen.SignUp.route)
                         },
                         color = MaterialTheme.colorScheme.primary
                     )
-                        Modifier.clickable { onNavigate(Screen.SignUp.route) })
+                        Modifier.clickable { onNavigate(Screen.SignUp.route) }
 
                 }
-
-                Text(text = message, color = MaterialTheme.colorScheme.error)
                 Text(text = message.value, color = MaterialTheme.colorScheme.error)
             }
         }

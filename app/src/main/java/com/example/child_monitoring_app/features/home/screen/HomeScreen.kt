@@ -29,12 +29,7 @@ import androidx.compose.ui.unit.dp
 import com.example.child_monitoring_app.core.preference.SharedPreference
 import com.example.child_monitoring_app.core.common.CommonButton
 import com.example.child_monitoring_app.core.navigation.Screen
-import com.example.child_monitoring_app.ui.data.SharedPreference
-import com.example.child_monitoring_app.ui.presentation.appUsage.AppLaunchScreen
-import com.example.child_monitoring_app.ui.presentation.appUsage.AppUsageViewModel
-import com.example.child_monitoring_app.ui.presentation.component.CommonButton
-import androidx.compose.material.icons.filled.BatteryStd
-import androidx.compose.material.icons.filled.Wifi
+
 
 
 
@@ -62,9 +57,8 @@ fun HomeScreen(
         MonitoringFeature(Icons.Default.AccountBox, "Call Details", Screen.PhoneNumberList.route),
         MonitoringFeature(Icons.Default.PlayArrow, "Browser Details", Screen.BrowserHistory.route),
         MonitoringFeature(Icons.Default.LocationOn, "Location", Screen.LocationScreen.route),
-        MonitoringFeature(Icons.Default.BatteryStd, "Battery", Screen.Battery.route),
-        MonitoringFeature(Icons.Default.Wifi, "Network", Screen.NetworkStatus.route)
-
+        MonitoringFeature(Icons.Default.ThumbUp, "Battery", Screen.Battery.route),
+        MonitoringFeature(Icons.Default.ThumbUp, "Network", Screen.Network.route)
     )
 
     Box(

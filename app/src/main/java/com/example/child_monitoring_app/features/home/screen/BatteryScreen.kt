@@ -1,4 +1,4 @@
-package com.example.child_monitoring_app.ui.presentation.battery
+package com.example.child_monitoring_app.features.home.screen
 
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -14,7 +14,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun BatteryScreen() {
+fun BatteryScreen(modifier: Modifier = Modifier) {
     val context = LocalContext.current
     var batteryLevel by remember { mutableStateOf(getBatteryPercentage(context)) }
     var isCharging by remember { mutableStateOf(false) }
@@ -47,7 +47,7 @@ fun BatteryScreen() {
 
     Box(
         contentAlignment = Alignment.Center,
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .padding(16.dp)
     ) {

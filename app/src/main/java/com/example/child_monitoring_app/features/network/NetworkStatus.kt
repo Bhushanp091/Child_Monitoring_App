@@ -1,4 +1,4 @@
-package com.example.child_monitoring_app.ui.presentation.network
+package com.example.child_monitoring_app.features.network
 
 sealed class NetworkStatus {
     object Connected : NetworkStatus()

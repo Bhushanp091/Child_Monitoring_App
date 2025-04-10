@@ -1,4 +1,4 @@
-package com.example.child_monitoring_app.ui.presentation.network
+package com.example.child_monitoring_app.features.network
 
 import android.content.Context
 import android.net.ConnectivityManager

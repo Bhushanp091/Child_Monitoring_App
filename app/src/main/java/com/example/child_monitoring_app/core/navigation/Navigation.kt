@@ -33,6 +33,8 @@ import com.example.child_monitoring_app.features.auth.screen.ChildLoginScreen
 import com.example.child_monitoring_app.features.auth.screen.ParentLoginScreen
 import com.example.child_monitoring_app.features.auth.screen.ParentSignupScreen
 import com.example.child_monitoring_app.features.home.HomeViewModel
+import com.example.child_monitoring_app.features.home.screen.BatteryScreen
+import com.example.child_monitoring_app.features.network.NetworkStatusScreen
 
 
 @Composable
@@ -194,6 +196,16 @@ fun Navigation() {
                 PermissionScreen(Modifier.padding(it))
             }
         }
+        composable(Screen.Battery.route) {
+            MainScaffold(navController, "Browser History") {
+                BatteryScreen(Modifier.padding(it))
+            }
+        }
+        composable(Screen.Network.route) {
+            MainScaffold(navController, "Browser History") {
+                NetworkStatusScreen(Modifier.padding(it))
+            }
+        }
     }
 }
 
@@ -227,5 +239,7 @@ sealed class Screen(val route: String) {
     data object WebBlocker : Screen("web_blocker")
     data object AppLaunch : Screen("app_launch")
     data object Permission : Screen("permission")
+    data object Battery : Screen("battery")
+    data object Network : Screen("network")
 }
 

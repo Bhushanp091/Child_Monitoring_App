@@ -1,30 +1,33 @@
-package com.example.child_monitoring_app.ui.presentation.network
+package com.example.child_monitoring_app.features.network
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Wifi
-import androidx.compose.material.icons.filled.WifiOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.graphics.Color
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import com.example.child_monitoring_app.R
 
 @Composable
-fun NetworkStatusScreen(networkStatusTracker: NetworkStatusTracker) {
+fun NetworkStatusScreen(
+    modifier: Modifier = Modifier
+) {
+    val context = LocalContext.current
+    val networkStatusTracker = NetworkStatusTracker(context)
     val isConnected by networkStatusTracker.networkStatus.collectAsState()
 
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .padding(16.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Icon(
-            imageVector = if (isConnected) Icons.Default.Wifi else Icons.Default.WifiOff,
+            painter =  painterResource( if (isConnected) R.drawable.baseline_wifi_24 else R.drawable.baseline_wifi_off_24),
             contentDescription = "Network Status",
             modifier = Modifier.size(64.dp),
             tint = if (isConnected) MaterialTheme.colorScheme.primary else Color.Red
