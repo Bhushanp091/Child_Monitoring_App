@@ -36,7 +36,7 @@
         android:theme="@style/Theme.Child_Monitoring_App"
         tools:targetApi="31">
         <activity
-            android:name=".MainActivity"
+            android:name=".app.MainActivity"
             android:exported="true"
             android:label="@string/app_name"
             android:theme="@style/Theme.Child_Monitoring_App">
@@ -48,7 +48,7 @@
 
         </activity>
         <activity
-            android:name=".activity.BlockOverlayActivity"
+            android:name=".app.BlockOverlayActivity"
             android:exported="true"
             android:label="@string/app_name"
             android:theme="@style/Theme.Child_Monitoring_App">
@@ -60,7 +60,7 @@
 
         </activity>
 
-        <service android:name=".UrlLoggingService"
+        <service android:name=".service.UrlLoggingService"
             android:exported="true"
             android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
             android:label="Child Monitoring">
@@ -73,7 +73,7 @@
                 android:resource="@xml/accessibility_service_config" />
         </service>
         <service
-            android:name=".ui.service.WebBlockService"
+            android:name=".service.WebBlockService"
             android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
             android:exported="true">
             <intent-filter>
