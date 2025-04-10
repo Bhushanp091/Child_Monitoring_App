@@ -57,7 +57,7 @@ fun Navigation() {
     NavHost(
         navController = navController,
         startDestination = startDestinationId
-//        startDestination = Screen.BrowserHistory.route
+//        startDestination = Screen.Permission.route
 //        startDestination = Screen.DashBoard.route
     ) {
 
@@ -192,7 +192,7 @@ fun Navigation() {
             }
         }
         composable(Screen.Permission.route) {
-            MainScaffold(navController, "Browser History") {
+            MainScaffold(navController, "Permission") {
                 PermissionScreen(Modifier.padding(it))
             }
         }

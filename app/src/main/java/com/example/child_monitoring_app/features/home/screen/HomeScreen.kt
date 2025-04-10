@@ -31,12 +31,6 @@ import com.example.child_monitoring_app.core.common.CommonButton
 import com.example.child_monitoring_app.core.navigation.Screen
 
 
-
-
-
-
-
-
 data class MonitoringFeature(
     val icon: ImageVector,
     val title: String,
@@ -60,7 +54,6 @@ fun HomeScreen(
         MonitoringFeature(Icons.Default.ThumbUp, "Battery", Screen.Battery.route),
         MonitoringFeature(Icons.Default.ThumbUp, "Network", Screen.Network.route)
     )
-
     Box(
         modifier = modifier
             .fillMaxSize()
