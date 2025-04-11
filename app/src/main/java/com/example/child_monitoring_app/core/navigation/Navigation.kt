@@ -18,6 +18,7 @@ import com.example.child_monitoring_app.features.call_log_history.CallHistoryScr
 import com.example.child_monitoring_app.features.browser_history.BrowserHistoryScreen
 import com.example.child_monitoring_app.core.common.MainScaffold
 import com.example.child_monitoring_app.core.permission.PermissionScreen
+import com.example.child_monitoring_app.core.ui.BaseViewModel
 import com.example.child_monitoring_app.features.app_blocker.screen.AppBlockerScreen
 import com.example.child_monitoring_app.features.app_blocker.screen.WebBlockerScreen
 import com.example.child_monitoring_app.features.child.ChildDashBoardScreen
@@ -41,6 +42,7 @@ import com.example.child_monitoring_app.features.network.NetworkStatusScreen
 fun Navigation() {
 
     val navController = rememberNavController()
+    val baseViewModel: BaseViewModel = viewModel()
     val appUsageViewModel: AppUsageViewModel = viewModel()
     val locationViewModel: LocationViewModel = viewModel()
     val authViewModel: AuthViewModel = viewModel()
@@ -99,25 +101,26 @@ fun Navigation() {
                 showFloatingButton = true,
                 showBackButton = false
             ) {
-                ChildListScreen(authViewModel, homeViewModel, Modifier.padding(it)) { route ->
+                ChildListScreen(authViewModel, appUsageViewModel,homeViewModel, Modifier.padding(it)) { route ->
                     onNavigate(navController, route)
                 }
             }
         }
 
         composable(Screen.DashBoard.route) {
-            MainScaffold(
-                navController,
-                "DashBoard",
-                showFloatingButton = true,
-                showBackButton = true
-            ) {
+//            MainScaffold(
+//                navController,
+//                "DashBoard",
+//                showFloatingButton = true,
+//                showBackButton =
+//            ) {
                 HomeScreen(
-                    Modifier.padding(it),
                     authViewModel,
-                    navController
-                )
-            }
+                    appUsageViewModel
+                ){
+                    onNavigate(navController,it)
+                }
+//            }
         }
 
         composable(Screen.AddChild.route) {

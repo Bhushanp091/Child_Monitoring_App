@@ -25,6 +25,8 @@ import androidx.compose.ui.res.painterResource
 import com.example.child_monitoring_app.R
 import com.example.child_monitoring_app.core.util.CommonUtil.formatMillisToTime
 import com.example.child_monitoring_app.core.preference.SharedPreference
+import com.example.child_monitoring_app.core.style_guide.Text.RegularText
+import com.example.child_monitoring_app.core.style_guide.Text.SubHeadingText
 import com.google.accompanist.drawablepainter.rememberDrawablePainter
 import network.chaintech.sdpcomposemultiplatform.sdp
 
@@ -149,10 +151,11 @@ fun AppUsageItem(appUsageInfo: AppUsageInfo) {
 
         // Column for App Name and Usage Time
         Column {
-            Text(text = appUsageInfo.appName, style = MaterialTheme.typography.bodyLarge)
-            Text(
-                text = "Usage Time: $formattedTime",
-                style = MaterialTheme.typography.bodyMedium
+            SubHeadingText.SemiBold(
+                title = appUsageInfo.appName
+            )
+            RegularText.Medium(
+                title = "Usage Time: $formattedTime",
             )
         }
     }

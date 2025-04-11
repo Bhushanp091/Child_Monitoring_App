@@ -6,7 +6,7 @@ import com.example.child_monitoring_app.core.ui.BaseViewModel
 import com.example.child_monitoring_app.features.call_log_history.Contact
 
 
-class AppUsageViewModel() : BaseViewModel() {
+class AppUsageViewModel : BaseViewModel() {
 
     var usageData = mutableStateOf<List<AppUsageInfo>>(emptyList())
     var callLogsMain = mutableStateOf(emptyList<CallLogModel>())

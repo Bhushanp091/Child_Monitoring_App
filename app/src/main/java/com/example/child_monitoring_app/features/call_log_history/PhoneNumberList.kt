@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -15,7 +16,10 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -24,9 +28,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import com.example.child_monitoring_app.R
 import com.example.child_monitoring_app.core.preference.SharedPreference
+import com.example.child_monitoring_app.core.style_guide.Text.RegularText
+import com.example.child_monitoring_app.core.style_guide.Text.SmallText
+import com.example.child_monitoring_app.core.style_guide.Text.SubHeadingText
+import com.example.child_monitoring_app.core.util.CommonUtil
 import com.example.child_monitoring_app.features.app_usage.AppUsageViewModel
+import com.example.child_monitoring_app.features.app_usage.CallLogModel
 import network.chaintech.sdpcomposemultiplatform.sdp
 import network.chaintech.sdpcomposemultiplatform.ssp
 
@@ -110,19 +122,10 @@ fun ContactInfoBoxNew(contact: Contact) {
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.Center
             ) {
-                Text(
-                    text = contact.name.ifEmpty { "Unknown" },
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 12.ssp,
-                    color = Color.Black
-                )
+                SubHeadingText.SemiBold(title = contact.name.ifEmpty { "Unknown" })
                 Spacer(Modifier.padding(2.sdp))
-                Text(
-                    text = contact.phoneNumber,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Color.Black,
-                    fontSize = 10.ssp,
+                RegularText.Medium(
+                    title = contact.phoneNumber,
                 )
             }
 //            Text(
@@ -139,3 +142,5 @@ fun ContactInfoBoxNew(contact: Contact) {
         )
     }
 }
+
+

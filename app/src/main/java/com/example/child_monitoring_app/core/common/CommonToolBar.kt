@@ -8,9 +8,11 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import com.example.child_monitoring_app.R
+import com.example.child_monitoring_app.core.style_guide.Text.SubHeadingText
 import network.chaintech.sdpcomposemultiplatform.ssp
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -22,10 +24,9 @@ fun CommonToolbar(
 ) {
     TopAppBar(
         title = {
-            Text(
-                text = title,
-                fontSize = 15.ssp,
-                fontWeight = FontWeight.Bold
+            SubHeadingText.SemiBold(
+                title = title,
+                textColor = Color(0xFF2A3252),
             )
         },
         navigationIcon = {

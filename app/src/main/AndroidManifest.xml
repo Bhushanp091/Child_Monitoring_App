@@ -47,18 +47,21 @@
             </intent-filter>
 
         </activity>
-        <activity
-            android:name=".app.BlockOverlayActivity"
-            android:exported="true"
-            android:label="@string/app_name"
-            android:theme="@style/Theme.Child_Monitoring_App">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
+<!--        <activity-->
+<!--            android:name=".app.BlockOverlayActivity"-->
+<!--            android:exported="true"-->
+<!--            android:label="@string/app_name"-->
+<!--            android:theme="@style/Theme.Child_Monitoring_App">-->
+<!--            <intent-filter>-->
+<!--                <action android:name="android.intent.action.MAIN" />-->
 
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
+<!--                <category android:name="android.intent.category.LAUNCHER" />-->
+<!--            </intent-filter>-->
 
-        </activity>
+<!--        </activity>-->
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="AIzaSyAJ0f6gCfjPfDnzoSNXqs-eth6LC36-9DM" />
         <service
             android:name=".service.WebBlockService"
             android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"

@@ -16,6 +16,7 @@ open class BaseViewModel : ViewModel() {
     var currentLocation = mutableStateOf<LatLng?>(null)
     var childId = mutableStateOf("")
     var childUserName = mutableStateOf("")
+    var childName = mutableStateOf("")
 
 
     fun storeChildData(

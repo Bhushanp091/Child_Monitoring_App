@@ -19,6 +19,8 @@ fun CommonButton(
     text: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    containerColor: Color = buttonColor,
+    textColor:Color = Color.White,
     enabled: Boolean = true
 ) {
     Button(
@@ -27,7 +29,7 @@ fun CommonButton(
             .fillMaxWidth()
             .height(56.dp),
         colors = ButtonDefaults.buttonColors(
-            containerColor = buttonColor, // Vibrant blue
+            containerColor = containerColor, // Vibrant blue
             disabledContainerColor = Color(0xFFBBDEFB), // Light blue when disabled
             contentColor = Color.White,
             disabledContentColor = Color.White.copy(alpha = 0.7f)
@@ -44,7 +46,8 @@ fun CommonButton(
             style = MaterialTheme.typography.labelLarge.copy(
                 fontWeight = FontWeight.SemiBold,
                 fontSize = 16.sp,
-                letterSpacing = 0.1.sp
+                letterSpacing = 0.1.sp,
+                color = textColor
             )
         )
     }

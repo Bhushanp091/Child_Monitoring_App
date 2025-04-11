@@ -246,12 +246,18 @@ class FirebaseAuthManager() {
         childId: String,
         onResult: (List<CallLogModel>) -> Unit
     ) {
-        firestore.collection("parents").document(parentId)
-            .collection("children").document(childId)
+        println("Call Log history $childId")
+
+        firestore.collection("parents")
+            .document(parentId)
+            .collection("children")
+            .document(childId)
             .get()
             .addOnSuccessListener { document ->
                 if (document.exists()) {
-                    val callLogsList = document.get("data.callLogs") as? List<HashMap<String, Any>>
+                    val dataMap = document.get("data") as? Map<*, *>
+                    val callLogsList = dataMap?.get("callLogs") as? List<Map<String, Any>>
+
                     val callLogs = callLogsList?.map { log ->
                         CallLogModel(
                             name = log["name"] as? String ?: "",
@@ -268,8 +274,11 @@ class FirebaseAuthManager() {
                     onResult(emptyList())
                 }
             }
-            .addOnFailureListener { Log.e("Firebase", "Error fetching call logs: ${it.message}") }
+            .addOnFailureListener {
+                Log.e("Firebase", "Error fetching call logs: ${it.message}")
+            }
     }
+
 
     fun uploadAppUsageToFirebase(context: Context, username: String) {
 
@@ -424,33 +433,42 @@ class FirebaseAuthManager() {
         childId: String,
         onResult: (List<Contact>) -> Unit
     ) {
+        if (parentId.isBlank() || childId.isBlank()) {
+            Log.e("Firebase", "Invalid parentId or childId")
+            onResult(emptyList())
+            return
+        }
+
         firestore.collection("parents").document(parentId)
             .collection("children").document(childId)
             .get()
             .addOnSuccessListener { document ->
                 if (document.exists()) {
-                    val callLogsList = document.get("data.contacts") as? List<HashMap<String, Any>>
-                    val callLogs = callLogsList?.map { log ->
+                    val dataMap = document.get("data") as? Map<*, *>
+                    val contactsList = dataMap?.get("contacts") as? List<Map<String, Any>>
+
+                    val contacts = contactsList?.map { contact ->
                         Contact(
-                            name = log["name"] as? String ?: "",
-                            id = log["id"] as? String ?: "",
-                            phoneNumber = log["phoneNumber"] as? String ?: ""
+                            name = contact["name"] as? String ?: "",
+                            id = contact["id"] as? String ?: "",
+                            phoneNumber = contact["phoneNumber"] as? String ?: ""
                         )
                     } ?: emptyList()
 
-                    onResult(callLogs)
+                    Log.d("Firebase", "Fetched ${contacts.size} contacts")
+                    onResult(contacts)
                 } else {
                     Log.e("Firebase", "Child document not found")
                     onResult(emptyList())
                 }
             }
             .addOnFailureListener {
-                Log.e(
-                    "Firebase",
-                    "Error fetching call contacts: ${it.message}"
-                )
+                Log.e("Firebase", "Error fetching contacts: ${it.message}")
+                onResult(emptyList())
             }
     }
+
+
 
 
     fun uploadChildLocationToFirebase(childId: String, location: LatLng) {
@@ -479,7 +497,7 @@ class FirebaseAuthManager() {
                                         Log.d("Firebase", "Location Updated successfully")
                                     }
                                     .addOnFailureListener {
-                                        Log.e("Firebase", "Error Updating Locaiton: ${it.message}")
+                                        Log.e("Firebase", "Error Updating Location: ${it.message}")
                                     }
                             } else {
                                 Log.e("Firebase", "No child document found for username: $childId")
