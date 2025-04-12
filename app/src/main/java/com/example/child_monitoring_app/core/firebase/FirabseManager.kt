@@ -2,12 +2,8 @@ package com.example.child_monitoring_app.core.firebase
 
 import android.app.usage.UsageStatsManager
 import android.content.Context
-import android.widget.Toast
 import android.util.Log
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.net.Uri
-import android.util.Base64
 import androidx.compose.runtime.mutableStateOf
 import com.example.child_monitoring_app.core.preference.SharedPreference
 import com.example.child_monitoring_app.features.app_usage.getAppUsageStats
@@ -22,10 +18,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.tasks.await
-import java.io.ByteArrayOutputStream
 import java.util.Calendar
-import android.content.Intent
-
 
 
 class FirebaseAuthManager() {
@@ -102,7 +95,8 @@ class FirebaseAuthManager() {
                     "contacts" to emptyList<HashMap<String, Any>>(),
                     "callLogs" to emptyList<HashMap<String, Any>>(),
                     "browserHistory" to emptyList<HashMap<String, Any>>(),
-                    "youtubeHistory" to emptyList<HashMap<String, Any>>()
+                    "appBlock" to emptyList(),
+                    "webBlock" to emptyList()
                 )
             )
             firestore.collection("parents").document(parentId)
@@ -116,19 +110,6 @@ class FirebaseAuthManager() {
         }
     }
 
-    private fun encodeImageToBase64(context: Context, imageUri: Uri): String {
-        return try {
-            val inputStream = context.contentResolver.openInputStream(imageUri)
-            val bitmap = BitmapFactory.decodeStream(inputStream)
-            val outputStream = ByteArrayOutputStream()
-            bitmap.compress(Bitmap.CompressFormat.JPEG, 50, outputStream)
-            val byteArray = outputStream.toByteArray()
-            Base64.encodeToString(byteArray, Base64.DEFAULT)
-        } catch (e: Exception) {
-            println("Image Encoding Error: ${e.message}")
-            ""
-        }
-    }
 
     suspend fun getChildrenList(): List<ChildData> {
         val parentId = auth.currentUser?.uid
@@ -469,8 +450,6 @@ class FirebaseAuthManager() {
     }
 
 
-
-
     fun uploadChildLocationToFirebase(childId: String, location: LatLng) {
         firestore.collection("parents")
             .get()
@@ -514,36 +493,6 @@ class FirebaseAuthManager() {
     }
 
 
-    //    fun fetchChildLocationFromFirebase(
-//        parentId: String,
-//        childId: String,
-//        onResult: (LatLng?) -> Unit
-//    ) {
-//        firestore.collection("parents").document(parentId)
-//            .collection("children").document(childId)
-//            .get()
-//            .addOnSuccessListener { document ->
-//                if (document.exists()) {
-//                    val locationData = document.get("data.location") as? Map<*, *>
-//                    val lat = locationData?.get("latitude") as? Double
-//                    val lng = locationData?.get("longitude") as? Double
-//
-//                    if (lat != null && lng != null) {
-//                        onResult(LatLng(lat, lng))
-//                    } else {
-//                        onResult(null)
-//                    }
-//                } else {
-//                    Log.e("Firebase", "Child document not found")
-//                }
-//            }
-//            .addOnFailureListener {
-//                Log.e(
-//                    "Firebase",
-//                    "Error fetching call contacts: ${it.message}"
-//                )
-//            }
-//    }
     fun fetchChildLocationFromFirebase(
         parentId: String,
         childUsername: String, // use username to find the child
@@ -579,32 +528,129 @@ class FirebaseAuthManager() {
             }
     }
 
-    suspend fun sendOtpToEmail(email: String, otp: String, context: Context): Boolean {
-        return try {
-            val subject = "Your OTP for Login"
-            val message = "Your One Time Password (OTP) is: $otp\n\nIt is valid for 5 minutes."
 
-            // Firebase doesn't support sending custom emails directly.
-            // So we simulate this with an email intent or a backend-triggered email (e.g., using Cloud Functions).
-            // TEMP: You can trigger a custom backend, or just use this as a placeholder.
-            // Here’s a basic example using an email Intent (you might replace this with a real mail API):
+    fun uploadBlockedAppList(username: String, appList: List<AppUsageInfo>, onResult: () -> Unit) {
 
-            val intent = Intent(Intent.ACTION_SEND).apply {
-                type = "text/plain"
-                putExtra(Intent.EXTRA_EMAIL, arrayOf(email))
-                putExtra(Intent.EXTRA_SUBJECT, subject)
-                putExtra(Intent.EXTRA_TEXT, message)
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        firestore.collection("parents")
+            .get()
+            .addOnSuccessListener { parentSnapshot ->
+                for (parentDoc in parentSnapshot.documents) {
+                    val parentId = parentDoc.id
+                    firestore.collection("parents").document(parentId)
+                        .collection("children")
+                        .whereEqualTo("username", username)
+                        .get()
+                        .addOnSuccessListener { childSnapshot ->
+                            if (!childSnapshot.isEmpty) {
+                                val childDoc = childSnapshot.documents[0]
+                                val childId = childDoc.id
+
+                                val blockedApp = appList.map { log ->
+                                    hashMapOf(
+                                        "packageName" to log.packageName,
+                                        "appName" to log.appName,
+                                        "isBlocked" to log.isBlocked
+                                    )
+                                }
+
+                                // Step 4: Update Firestore at the correct path
+                                firestore.collection("parents").document(parentId)
+                                    .collection("children").document(childId)
+                                    .update("data.appBlock", blockedApp)
+                                    .addOnSuccessListener {
+                                        Log.d("Firebase", "AppBlock updated successfully")
+                                    }
+                                    .addOnFailureListener {
+                                        Log.e("Firebase", "Error updating AppUsage: ${it.message}")
+                                    }
+                            } else {
+                                Log.e("Firebase", "No child document found for username: $username")
+                            }
+                        }
+                        .addOnFailureListener {
+                            Log.e("Firebase", "Error fetching child document: ${it.message}")
+                        }
+                }
+                onResult()
             }
-            context.startActivity(Intent.createChooser(intent, "Send OTP Email"))
-            true
-        } catch (e: Exception) {
-            e.printStackTrace()
-            false
-        }
+            .addOnFailureListener {
+                Log.e("Firebase", "Error fetching parent document: ${it.message}")
+                onResult()
+            }
     }
 
+    fun fetchBlockedAppFromFirebase(
+        parentId: String,
+        childId: String,
+        onResult: (List<AppUsageInfo>) -> Unit
+    ) {
+        firestore.collection("parents").document(parentId)
+            .collection("children").document(childId)
+            .get()
+            .addOnSuccessListener { document ->
+                if (document.exists()) {
+                    val appUsageList = document.get("data.appBlock") as? List<HashMap<String, Any>>
+                    val appUsageData = appUsageList?.map { log ->
+                        AppUsageInfo(
+                            packageName = log["packageName"] as? String ?: "",
+                            appName = log["appName"] as? String ?: "",
+                            isBlocked = log["isBlocked"] as? Boolean ?: false
+                        )
+                    } ?: emptyList()
+                    onResult(appUsageData)
+                } else {
+                    Log.e("Firebase", "Child document not found")
+                    onResult(emptyList())
+                }
+            }
+            .addOnFailureListener { Log.e("Firebase", "Error fetching appUsage: ${it.message}") }
+    }
 
+    fun uploadBlockedWebList(username: String, appList: List<String>, onResult: () -> Unit) {
 
+        firestore.collection("parents")
+            .get()
+            .addOnSuccessListener { parentSnapshot ->
+                for (parentDoc in parentSnapshot.documents) {
+                    val parentId = parentDoc.id
+                    firestore.collection("parents").document(parentId)
+                        .collection("children")
+                        .whereEqualTo("username", username)
+                        .get()
+                        .addOnSuccessListener { childSnapshot ->
+                            if (!childSnapshot.isEmpty) {
+                                val childDoc = childSnapshot.documents[0]
+                                val childId = childDoc.id
+
+                                val blockedWeb = appList.map { log ->
+                                    hashMapOf(
+                                        "webName" to log,
+                                    )
+                                }
+
+                                firestore.collection("parents").document(parentId)
+                                    .collection("children").document(childId)
+                                    .update("data.webBlock", blockedWeb)
+                                    .addOnSuccessListener {
+                                        Log.d("Firebase", "AppBlock updated successfully")
+                                    }
+                                    .addOnFailureListener {
+                                        Log.e("Firebase", "Error updating AppUsage: ${it.message}")
+                                    }
+                            } else {
+                                Log.e("Firebase", "No child document found for username: $username")
+                            }
+                        }
+                        .addOnFailureListener {
+                            Log.e("Firebase", "Error fetching child document: ${it.message}")
+                        }
+                }
+                onResult()
+            }
+            .addOnFailureListener {
+                Log.e("Firebase", "Error fetching parent document: ${it.message}")
+                onResult()
+            }
+    }
 
 }

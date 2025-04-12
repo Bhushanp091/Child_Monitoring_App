@@ -35,6 +35,7 @@ import com.example.child_monitoring_app.features.auth.screen.ParentLoginScreen
 import com.example.child_monitoring_app.features.auth.screen.ParentSignupScreen
 import com.example.child_monitoring_app.features.home.HomeViewModel
 import com.example.child_monitoring_app.features.home.screen.BatteryScreen
+import com.example.child_monitoring_app.features.home.screen.FeaturesScree
 import com.example.child_monitoring_app.features.network.NetworkStatusScreen
 
 
@@ -177,21 +178,21 @@ fun Navigation() {
         }
 
         composable(Screen.AppBlocker.route) {
-            MainScaffold(navController, "Browser History") {
-                AppBlockerScreen(Modifier.padding(it))
+            MainScaffold(navController, "App Blocker") {
+                AppBlockerScreen(Modifier.padding(it),appUsageViewModel)
             }
         }
 
         composable(Screen.WebBlocker.route) {
-            MainScaffold(navController, "Browser History") {
-                WebBlockerScreen(Modifier.padding(it))
+            MainScaffold(navController, "Web Blocker") {
+                WebBlockerScreen(Modifier.padding(it),appUsageViewModel)
             }
         }
 
 
         composable(Screen.AppLaunch.route) {
-            MainScaffold(navController, "Browser History") {
-                WebBlockerScreen(Modifier.padding(it))
+            MainScaffold(navController, "Web Blocker") {
+                WebBlockerScreen(Modifier.padding(it),appUsageViewModel)
             }
         }
         composable(Screen.Permission.route) {
@@ -199,14 +200,9 @@ fun Navigation() {
                 PermissionScreen(Modifier.padding(it))
             }
         }
-        composable(Screen.Battery.route) {
-            MainScaffold(navController, "Browser History") {
-                BatteryScreen(Modifier.padding(it))
-            }
-        }
-        composable(Screen.Network.route) {
-            MainScaffold(navController, "Browser History") {
-                NetworkStatusScreen(Modifier.padding(it))
+        composable(Screen.Features.route) {
+            MainScaffold(navController, "Features") {
+                FeaturesScree(Modifier.padding(it)){ onNavigate(navController,it) }
             }
         }
     }
@@ -242,7 +238,6 @@ sealed class Screen(val route: String) {
     data object WebBlocker : Screen("web_blocker")
     data object AppLaunch : Screen("app_launch")
     data object Permission : Screen("permission")
-    data object Battery : Screen("battery")
-    data object Network : Screen("network")
+    data object Features : Screen("features")
 }
 

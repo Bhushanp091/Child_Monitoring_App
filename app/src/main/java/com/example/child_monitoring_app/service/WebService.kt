@@ -4,6 +4,7 @@ import android.accessibilityservice.AccessibilityService
 import android.content.Intent
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
+import com.example.child_monitoring_app.app.BlockOverlayActivity
 
 class WebBlockService : AccessibilityService() {
 
@@ -13,7 +14,7 @@ class WebBlockService : AccessibilityService() {
         "com.opera.browser" to "com.opera.browser:id/url_field"
     )
 
-    private val blockedSites = listOf("x.com", "amazon.in", "reddit.com")
+    private val blockedSites = listOf("x", "amazon.in", "reddit.com")
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
         if (event?.packageName == null || event.source == null) return
@@ -32,11 +33,11 @@ class WebBlockService : AccessibilityService() {
     }
 
     private fun showBlockScreen(url: String) {
-//        val intent = Intent(this, BlockOverlayActivity::class.java).apply {
-//            putExtra("blockedUrl", url)
-//            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
-//        }
-//        startActivity(intent)
+        val intent = Intent(this, BlockOverlayActivity::class.java).apply {
+            putExtra("blockedUrl", url)
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+        }
+        startActivity(intent)
     }
 
     override fun onInterrupt() {}

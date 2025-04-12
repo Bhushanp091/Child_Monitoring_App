@@ -33,6 +33,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
@@ -121,16 +122,16 @@ fun HomeScreen(
             "Call History", R.drawable.ic_contact, Screen.CallHistory.route,
             GreenGradient
         ),
-        MonitoringFeature(
-            "Contacts",
-            R.drawable.ic_call,
-            Screen.PhoneNumberList.route,
-            PinkGradient
-        ),
-        MonitoringFeature(
-            "Browser History", R.drawable.baseline_web_24, Screen.BrowserHistory.route,
-            GrayGradient
-        ),
+//        MonitoringFeature(
+//            "Contacts",
+//            R.drawable.ic_call,
+//            Screen.PhoneNumberList.route,
+//            PinkGradient
+//        ),
+//        MonitoringFeature(
+//            "Browser History", R.drawable.baseline_web_24, Screen.BrowserHistory.route,
+//            GrayGradient
+//        ),
         MonitoringFeature(
             "Location",
             R.drawable.baseline_location_on_24,
@@ -184,7 +185,25 @@ fun HomeScreen(
             )
 
             Spacer(modifier = Modifier.height(24.dp))
-            SubHeadingText.SemiBold(title = "Features", modifier = Modifier.padding(start = 3.sdp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                SubHeadingText.SemiBold(title = "Features", modifier = Modifier.padding(start = 3.sdp))
+
+                TextButton(
+                    onClick = { onNavigate(Screen.Features.route) },
+                    colors = ButtonDefaults.textButtonColors(
+                        contentColor = Color(0xFF4A6FFF)
+                    )
+                ) {
+                    RegularText.Medium(
+                        title = "See All",
+                        textColor = Color(0xFF4A6FFF)
+                    )
+                }
+            }
             Spacer(modifier = Modifier.height(12.dp))
 
             LazyVerticalGrid(
@@ -192,7 +211,7 @@ fun HomeScreen(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 modifier = Modifier
-                    .height(510.dp) // Fixed height for grid
+                    .height(350.dp) // Fixed height for grid
                     .nestedScroll(remember { object : NestedScrollConnection {} }),
                 content = {
                     items(features) { feature ->
@@ -515,12 +534,14 @@ fun FeatureCardWithImage(
                 Image(
                     painter = painterResource(id = feature.iconResId),
                     contentDescription = feature.title,
-                    modifier = Modifier.size(48.dp)
+                    modifier = Modifier.size(48.dp),
+                    colorFilter = ColorFilter.tint(Color.White)
                 )
                 Spacer(modifier = Modifier.height(12.dp))
                 SubHeadingText.Medium(
                     title = feature.title,
-                    textAlign = TextAlign.Center
+                    textAlign = TextAlign.Center,
+                    textColor = Color.White
                 )
             }
         }
