@@ -23,11 +23,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.child_monitoring_app.core.preference.SharedPreference
-import com.example.child_monitoring_app.core.preference.SharedPreference.saveBlockedWeb
 import com.example.child_monitoring_app.core.style_guide.Text.RegularText
 import com.example.child_monitoring_app.core.style_guide.Text.SmallText
 import com.example.child_monitoring_app.core.style_guide.Text.SubHeadingText
-import com.example.child_monitoring_app.core.util.adultWebsites
 import com.example.child_monitoring_app.core.util.socialMediaWebsites
 import com.example.child_monitoring_app.features.app_usage.AppUsageViewModel
 
@@ -218,7 +216,7 @@ fun WebBlockerScreen(
                     blockedWebsites.add(input)
                 }
                 val combinedList = blockedWebsites.toMutableSet()
-                if (blockAdultContent) combinedList.addAll(adultWebsites)
+//                if (blockAdultContent) combinedList.addAll(adultWebsites)
                 if (blockSocialMedia) combinedList.addAll(socialMediaWebsites)
                 appUsageViewModel.firebaseManager.uploadBlockedWebList(
                     appUsageViewModel.childId.value,

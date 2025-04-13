@@ -58,16 +58,16 @@ fun AppBlockerScreen(
     val context = LocalContext.current
     val parentId = SharedPreference.getParentId(context) ?: ""
 
-    LaunchedEffect (Unit){
+    LaunchedEffect(Unit) {
         appUsageViewModel.firebaseManager.fetchBlockedAppFromFirebase(
             parentId,
             appUsageViewModel.childId.value
-        ) { it ->
-            it.forEach {
-                appUsageViewModel.blockedApp.value.contains(it)
+        ) { list ->
+            list.forEach {
+                if (appUsageViewModel.blockedApp.value.contains(it)) {
+                    appUsageViewModel.blockedApp.value += it
+                }
             }
-
-            appUsageViewModel.blockedApp.value += it
         }
     }
 

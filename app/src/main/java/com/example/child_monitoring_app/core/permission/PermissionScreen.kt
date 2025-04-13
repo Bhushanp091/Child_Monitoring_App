@@ -126,7 +126,7 @@ fun PermissionScreen(modifier: Modifier = Modifier, onNavigate: (String) -> Unit
                 onNavigate(Screen.ChildDashBoard.route)
             }
         ) {
-            Text("Refresh Permissions")
+            Text("Proceed to Child DashBoard")
         }
     }
 }

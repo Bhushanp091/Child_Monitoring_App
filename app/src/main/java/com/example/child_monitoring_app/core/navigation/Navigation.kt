@@ -231,11 +231,11 @@ fun onNavigate(navController: NavController, route: String) {
 }
 
 fun determineStartDestination(context: Context): String {
-    return if (!SharedPreference.isUserLoggedIn(context)) {
+    return if (SharedPreference.isUserLoggedIn(context)) {
         Screen.FingerPrint.route
-    } else if (!isChildLoggedIn(context)) {
+    } else if (isChildLoggedIn(context)) {
         if (!areAllPermissionsGranted(context)) {
-            return Screen.Permission.route
+            Screen.Permission.route
         } else {
             Screen.ChildDashBoard.route
         }
