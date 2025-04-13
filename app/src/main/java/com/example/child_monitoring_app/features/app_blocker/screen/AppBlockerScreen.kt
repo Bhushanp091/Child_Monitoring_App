@@ -63,6 +63,10 @@ fun AppBlockerScreen(
             parentId,
             appUsageViewModel.childId.value
         ) { it ->
+            it.forEach {
+                appUsageViewModel.blockedApp.value.contains(it)
+            }
+
             appUsageViewModel.blockedApp.value += it
         }
     }

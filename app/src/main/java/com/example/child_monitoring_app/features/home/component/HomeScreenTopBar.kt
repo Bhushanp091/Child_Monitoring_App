@@ -34,7 +34,7 @@ fun HomeScreenTopBar(
     avatar: Int = R.drawable.child_image,
     name: String,
     isActive: Boolean,
-    batteryPercentage: Int,
+    batteryPercentage: String,
     onClick:()->Unit
 ) {
     Card(

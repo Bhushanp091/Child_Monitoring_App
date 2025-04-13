@@ -63,6 +63,7 @@ import com.example.child_monitoring_app.features.call_log_history.convertTimesta
 import com.example.child_monitoring_app.features.home.component.HomeScreenTopBar
 import com.example.child_monitoring_app.features.network.NetworkStatusTracker
 import com.google.accompanist.drawablepainter.rememberDrawablePainter
+import kotlinx.coroutines.launch
 import network.chaintech.sdpcomposemultiplatform.sdp
 import java.util.Calendar
 
@@ -75,9 +76,11 @@ fun HomeScreen(
     onNavigate: (String) -> Unit
 ) {
     val context = LocalContext.current
-    val networkStatusTracker = NetworkStatusTracker(context)
-    val isConnected by networkStatusTracker.networkStatus.collectAsState()
-    var batteryLevel by remember { mutableStateOf(getBatteryPercentage(context)) }
+//    val networkStatusTracker = NetworkStatusTracker(context)
+//    val isConnected by networkStatusTracker.networkStatus.collectAsState()
+//    var batteryLevel by remember { mutableStateOf(getBatteryPercentage(context)) }
+    var isConnected by remember { mutableStateOf(false) }
+    var batteryLevel by remember { mutableStateOf("") }
     val parenId = SharedPreference.getParentId(context) ?: ""
     var selectedInterval = remember { mutableStateOf(UsageStatsManager.INTERVAL_DAILY) }
     val flag = remember { mutableStateOf(true) }
@@ -102,13 +105,27 @@ fun HomeScreen(
         }
     }
     LaunchedEffect(Unit) {
-        appUsageViewModel.firebaseManager.fetchCallLogsFromFirebase(
-            parenId,
-            appUsageViewModel.childId.value
-        ) {
-            if (callLogFlag.value) {
-                appUsageViewModel.callLogsMain.value = it
-                callLogFlag.value = !callLogFlag.value
+
+        launch {
+            appUsageViewModel.firebaseManager.fetchCallLogsFromFirebase(
+                parenId,
+                appUsageViewModel.childId.value
+            ) {
+                if (callLogFlag.value) {
+                    appUsageViewModel.callLogsMain.value = it
+                    callLogFlag.value = !callLogFlag.value
+                }
+            }
+        }
+
+        launch {
+            appUsageViewModel.firebaseManager.fetchBatteryAndNetworkData(
+                parenId,
+                appUsageViewModel.childId.value,
+            ){battery,isActive->
+                println("Battery Percentage $battery $isActive")
+                isConnected = isActive
+                batteryLevel = battery.toString()
             }
         }
     }

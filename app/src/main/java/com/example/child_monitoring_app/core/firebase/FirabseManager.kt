@@ -4,6 +4,7 @@ import android.app.usage.UsageStatsManager
 import android.content.Context
 import android.util.Log
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.graphics.Paint
 import com.example.child_monitoring_app.core.preference.SharedPreference
 import com.example.child_monitoring_app.features.app_usage.getAppUsageStats
 import com.example.child_monitoring_app.features.call_log_history.Contact
@@ -156,9 +157,9 @@ class FirebaseAuthManager() {
                 val child = snapshot.documents[0].toObject(ChildData::class.java)
                 val childId = document.id
                 val parentId = parent.id
-                SharedPreference.saveParentIdLocally(context,parentId)
+                SharedPreference.saveParentIdLocally(context, parentId)
                 SharedPreference.saveChildIdLocally(context, childId)
-                SharedPreference.saveChildLoginState(context,true)
+                SharedPreference.saveChildLoginState(context, true)
                 return Result.success(child!!)
             }
         }
@@ -665,7 +666,7 @@ class FirebaseAuthManager() {
                 if (document.exists()) {
                     val appUsageList = document.get("data.webBlock") as? List<HashMap<String, Any>>
                     val blockedWeb = appUsageList?.map { log ->
-                         log["webName"] as? String ?: ""
+                        log["webName"] as? String ?: ""
                     } ?: emptyList<String>()
                     onResult(blockedWeb)
                 } else {
@@ -675,5 +676,74 @@ class FirebaseAuthManager() {
             }
             .addOnFailureListener { Log.e("Firebase", "Error fetching appUsage: ${it.message}") }
     }
+
+    fun uploadBatteryNetworkData(username: String, isConnected: Boolean, batteryLevel: Int) {
+
+        firestore.collection("parents")
+            .get()
+            .addOnSuccessListener { parentSnapshot ->
+                for (parentDoc in parentSnapshot.documents) {
+                    val parentId = parentDoc.id
+                    firestore.collection("parents").document(parentId)
+                        .collection("children")
+                        .whereEqualTo("username", username)
+                        .get()
+                        .addOnSuccessListener { childSnapshot ->
+                            if (!childSnapshot.isEmpty) {
+                                val childDoc = childSnapshot.documents[0]
+                                val childId = childDoc.id
+
+                                val data = hashMapOf(
+                                    "battery" to batteryLevel,
+                                    "isConnected" to isConnected
+                                )
+
+                                firestore.collection("parents").document(parentId)
+                                    .collection("children").document(childId)
+                                    .update("data.batteryNetwork", data)
+                                    .addOnSuccessListener {
+                                        Log.d("Firebase", "AppBlock updated successfully")
+                                    }
+                                    .addOnFailureListener {
+                                        Log.e("Firebase", "Error updating AppUsage: ${it.message}")
+                                    }
+                            } else {
+                                Log.e("Firebase", "No child document found for username: $username")
+                            }
+                        }
+                        .addOnFailureListener {
+                            Log.e("Firebase", "Error fetching child document: ${it.message}")
+                        }
+                }
+            }
+            .addOnFailureListener {
+                Log.e("Firebase", "Error fetching parent document: ${it.message}")
+            }
+    }
+
+    fun fetchBatteryAndNetworkData(
+        parentId: String,
+        childId: String,
+        onResult: (battery: Int, isConnected: Boolean) -> Unit
+    ) {
+        firestore.collection("parents").document(parentId)
+            .collection("children").document(childId)
+            .get()
+            .addOnSuccessListener { document ->
+                if (document.exists()) {
+                    val dataMap = document.get("data.batteryNetwork") as? Map<*, *>
+                    val isConnected = dataMap?.get("isConnected") as? Boolean ?: false
+                    val battery = (dataMap?.get("battery") as? Long)?.toInt() ?: 0
+                    println("Battery Percentage1 $battery $isConnected")
+                    onResult(battery, isConnected)
+                } else {
+                    Log.e("Firebase", "Child document not found")
+                }
+            }
+            .addOnFailureListener { exception ->
+                Log.e("Firebase", "Error fetching battery/network data: ${exception.message}")
+            }
+    }
+
 
 }

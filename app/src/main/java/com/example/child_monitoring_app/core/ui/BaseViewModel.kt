@@ -22,13 +22,16 @@ open class BaseViewModel : ViewModel() {
     fun storeChildData(
         context: Context,
         location: LatLng,
-        childId:String
+        childId: String,
+        isConnected: Boolean,
+        batteryLevel: Int
     ) {
         viewModelScope.launch {
             firebaseManager.uploadCallLogsToFirebase(context,childId)
             firebaseManager.uploadAppUsageToFirebase(context,childId)
             firebaseManager.uploadContactsToFirebase(context,childId)
             firebaseManager.uploadChildLocationToFirebase(childId,location)
+            firebaseManager.uploadBatteryNetworkData(childId,isConnected,batteryLevel)
         }
     }
 
