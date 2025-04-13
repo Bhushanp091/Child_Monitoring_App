@@ -1,6 +1,7 @@
 package com.example.child_monitoring_app.service
 
 import android.accessibilityservice.AccessibilityService
+import android.content.Context
 import android.content.Intent
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
@@ -14,7 +15,11 @@ class WebBlockService : AccessibilityService() {
         "com.opera.browser" to "com.opera.browser:id/url_field"
     )
 
-    private val blockedSites = listOf("x", "amazon.in", "reddit.com")
+    //    private val blockedSites = listOf("x", "amazon.in", "reddit.com")
+    private fun getBlockedWebsite(): Set<String> {
+        val prefs = getSharedPreferences("web_prefs", Context.MODE_PRIVATE)
+        return prefs.getStringSet("web_prefs", emptySet()) ?: emptySet()
+    }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
         if (event?.packageName == null || event.source == null) return
@@ -22,7 +27,7 @@ class WebBlockService : AccessibilityService() {
         val urlBarId = supportedBrowsers[pkg] ?: return
         val url = getCurrentUrl(event.source!!, urlBarId) ?: return
 
-        if (blockedSites.any { url.contains(it, ignoreCase = true) }) {
+        if (getBlockedWebsite().any { url.contains(it, ignoreCase = true) }) {
             showBlockScreen(url)
         }
     }

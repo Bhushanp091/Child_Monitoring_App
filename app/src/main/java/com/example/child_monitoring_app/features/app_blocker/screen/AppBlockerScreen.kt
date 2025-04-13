@@ -37,6 +37,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.ui.platform.LocalContext
+import com.example.child_monitoring_app.core.preference.SharedPreference
 import com.example.child_monitoring_app.core.style_guide.Text.RegularText
 import com.example.child_monitoring_app.core.style_guide.Text.SmallText
 import com.example.child_monitoring_app.core.style_guide.Text.SubHeadingText
@@ -53,9 +54,18 @@ fun AppBlockerScreen(
 ) {
 
     val allApps = appUsageViewModel.usageData.value
-
-
     var selectedApps = remember { mutableStateListOf<AppUsageInfo>() }
+    val context = LocalContext.current
+    val parentId = SharedPreference.getParentId(context) ?: ""
+
+    LaunchedEffect (Unit){
+        appUsageViewModel.firebaseManager.fetchBlockedAppFromFirebase(
+            parentId,
+            appUsageViewModel.childId.value
+        ) { it ->
+            appUsageViewModel.blockedApp.value += it
+        }
+    }
 
     Column(
         modifier = modifier

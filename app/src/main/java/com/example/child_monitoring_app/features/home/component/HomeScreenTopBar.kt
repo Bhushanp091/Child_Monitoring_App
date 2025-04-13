@@ -34,14 +34,16 @@ fun HomeScreenTopBar(
     avatar: Int = R.drawable.child_image,
     name: String,
     isActive: Boolean,
-    batteryPercentage: Int
+    batteryPercentage: Int,
+    onClick:()->Unit
 ) {
     Card(
         modifier = modifier
             .fillMaxWidth()
             .padding(top = 10.sdp)
             .padding(horizontal = 10.dp)
-            .clip(RoundedCornerShape(16.dp)),
+            .clip(RoundedCornerShape(16.dp))
+            .clickable { onClick() },
         elevation = CardDefaults.cardElevation(6.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White)
     ) {

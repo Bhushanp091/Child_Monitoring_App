@@ -33,6 +33,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -94,6 +95,18 @@ fun AddChildScreen(
         }
     }
 
+    val status by authViewModel.status.collectAsState()
+
+    // Show toast on result
+    LaunchedEffect(status) {
+        status?.let {
+            if (it.isSuccess) {
+                context.toast("Child Added")
+            } else {
+                context.toast("Error ")
+            }
+        }
+    }
 
     Box(
         modifier = Modifier
@@ -238,18 +251,13 @@ fun AddChildScreen(
                 Button(
                     onClick = {
                         if (name.value.isNotEmpty() && age.value.isNotEmpty() && password.value.isNotEmpty() && username.value.isNotEmpty()) {
-                            coroutineScope.launch {
-                                val result = authViewModel.addChild(
-                                    parentId,
-                                    name.value,
-                                    age.value.toIntOrNull() ?: 0,
-                                    username.value,
-                                    password.value,
-                                    selectedImageUri.value,
-                                    context
-                                )
-                                message.value = result.getOrDefault("Error occurred")
-                            }
+                            authViewModel.addChild(
+                                parentId,
+                                name.value,
+                                age.value.toIntOrNull() ?: 0,
+                                username.value,
+                                password.value,
+                            )
                         } else {
                             context.toast("Enter all fields", ToastType.ERROR)
                         }

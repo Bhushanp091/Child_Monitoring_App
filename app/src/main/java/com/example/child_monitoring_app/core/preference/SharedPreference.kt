@@ -25,27 +25,28 @@ object SharedPreference {
     }
 
 
-    fun saveParentLoginState(context: Context, isLoggedIn: Boolean) {
+    fun saveParentLoginState(context: Context, isLoggedIn: Boolean = false) {
         val sharedPref = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
         sharedPref.edit().putBoolean(PARENT_IS_LOGGED_IN, isLoggedIn).apply()
-//        sharedPref.edit().putBoolean(CHILD_IS_LOGGED_IN, false).apply()
     }
 
-    fun saveChildLoginState(context: Context, isLoggedIn: Boolean) {
+
+    fun saveChildLoginState(context: Context, isLoggedIn: Boolean = false) {
         val sharedPref = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
-//        sharedPref.edit().putBoolean(PARENT_IS_LOGGED_IN, false).apply()
         sharedPref.edit().putBoolean(CHILD_IS_LOGGED_IN, isLoggedIn).apply()
     }
 
 
     fun isUserLoggedIn(context: Context): Boolean {
         val sharedPref = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
-        return sharedPref.getBoolean(PARENT_IS_LOGGED_IN, false)
+        val result = sharedPref.getBoolean(PARENT_IS_LOGGED_IN, false)
+        return result
     }
+
 
     fun isChildLoggedIn(context: Context):Boolean{
         val sharedPref = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
-        return sharedPref.getBoolean(CHILD_IS_LOGGED_IN, false)
+        return sharedPref.getBoolean(CHILD_IS_LOGGED_IN, true)
     }
 
     fun logout(context: Context) {
@@ -53,11 +54,29 @@ object SharedPreference {
         sharedPref.edit().clear().apply()
     }
 
+    fun saveBlockedApps(context: Context, apps: List<String>) {
+        val prefs = context.getSharedPreferences(BLOCKED_PREFS, Context.MODE_PRIVATE)
+        prefs.edit().putStringSet(BLOCKED_PREFS, apps.toSet()).apply()
+    }
+
+    fun saveBlockedWeb(context: Context, webs: List<String>) {
+        val prefs = context.getSharedPreferences(BLOCKED_WEB_PREFS, Context.MODE_PRIVATE)
+        prefs.edit().putStringSet(BLOCKED_WEB_PREFS, webs.toSet()).apply()
+    }
+
+    private fun getBlockedApps(context: Context): Set<String> {
+        val prefs = context.getSharedPreferences("blocker_prefs", Context.MODE_PRIVATE)
+        return prefs.getStringSet("blocker_prefs", emptySet()) ?: emptySet()
+    }
+
+
 
     private const val PREF_NAME = "ChildMonitorPrefs"
     private const val KEY_PARENT_ID = "parentId"
     private const val KEY_CHILD_ID = "child_id"
     private const val PARENT_IS_LOGGED_IN = "isLoggedIn"
     private const val CHILD_IS_LOGGED_IN = "isLoggedIn"
+    private const val BLOCKED_PREFS = "blocker_prefs"
+    private const val BLOCKED_WEB_PREFS = "web_prefs"
 
 }

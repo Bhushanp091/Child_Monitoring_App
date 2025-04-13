@@ -122,16 +122,6 @@ fun HomeScreen(
             "Call History", R.drawable.ic_contact, Screen.CallHistory.route,
             GreenGradient
         ),
-//        MonitoringFeature(
-//            "Contacts",
-//            R.drawable.ic_call,
-//            Screen.PhoneNumberList.route,
-//            PinkGradient
-//        ),
-//        MonitoringFeature(
-//            "Browser History", R.drawable.baseline_web_24, Screen.BrowserHistory.route,
-//            GrayGradient
-//        ),
         MonitoringFeature(
             "Location",
             R.drawable.baseline_location_on_24,
@@ -144,18 +134,7 @@ fun HomeScreen(
         ),
     )
 
-    // Mock data for app usage
-//    val appUsageList = remember {
-//        listOf(
-//            AppUsageData("Instagram", R.drawable.child_image, "2h 15m",9 ,0.75f),
-//            AppUsageData("YouTube", R.drawable.child_image, "1h 30m",7 ,0.5f),
-//            AppUsageData("TikTok", R.drawable.child_image, "45m",13 ,0.25f)
-//        )
-//    }
-
     val appUsageList = appUsageViewModel.usageData.value.take(4)
-
-    // Mock data for call history
     val callHistoryList = appUsageViewModel.callLogsMain.value.take(4)
 
     Box(
@@ -175,14 +154,13 @@ fun HomeScreen(
         ) {
             Spacer(modifier = Modifier.height(20.sdp))
 
-            // Top Bar Section
             HomeScreenTopBar(
                 modifier = Modifier,
                 avatar = R.drawable.child_image,
                 name = authViewModel.childName.value,
                 isActive = isConnected,
                 batteryPercentage = batteryLevel
-            )
+            ){onNavigate(Screen.ShowChildList.route)}
 
             Spacer(modifier = Modifier.height(24.dp))
             Row(

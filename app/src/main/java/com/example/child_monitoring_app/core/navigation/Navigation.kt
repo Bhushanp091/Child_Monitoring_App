@@ -1,5 +1,6 @@
 package com.example.child_monitoring_app.core.navigation
 
+import android.content.Context
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -18,7 +19,9 @@ import com.example.child_monitoring_app.features.call_log_history.CallHistoryScr
 import com.example.child_monitoring_app.features.browser_history.BrowserHistoryScreen
 import com.example.child_monitoring_app.core.common.MainScaffold
 import com.example.child_monitoring_app.core.permission.PermissionScreen
+import com.example.child_monitoring_app.core.preference.SharedPreference.isChildLoggedIn
 import com.example.child_monitoring_app.core.ui.BaseViewModel
+import com.example.child_monitoring_app.core.util.areAllPermissionsGranted
 import com.example.child_monitoring_app.features.app_blocker.screen.AppBlockerScreen
 import com.example.child_monitoring_app.features.app_blocker.screen.WebBlockerScreen
 import com.example.child_monitoring_app.features.child.ChildDashBoardScreen
@@ -51,17 +54,17 @@ fun Navigation() {
     val context = LocalContext.current
 
 
-    val startDestinationId = if (SharedPreference.isUserLoggedIn(context)) {
-        Screen.FingerPrint.route
-    } else {
-        Screen.PreLogin.route
-    }
+//    val startDestinationId = if (SharedPreference.isUserLoggedIn(context) ) {
+//        Screen.FingerPrint.route
+//    } else if (isChildLoggedIn(context)){
+//        Screen.ChildDashBoard.route
+//    } else{
+//        Screen.PreLogin.route
+//    }
 
     NavHost(
         navController = navController,
-        startDestination = startDestinationId
-//        startDestination = Screen.Permission.route
-//        startDestination = Screen.DashBoard.route
+        startDestination = determineStartDestination(context)
     ) {
 
         composable(Screen.PreLogin.route) {
@@ -102,7 +105,12 @@ fun Navigation() {
                 showFloatingButton = true,
                 showBackButton = false
             ) {
-                ChildListScreen(authViewModel, appUsageViewModel,homeViewModel, Modifier.padding(it)) { route ->
+                ChildListScreen(
+                    authViewModel,
+                    appUsageViewModel,
+                    homeViewModel,
+                    Modifier.padding(it)
+                ) { route ->
                     onNavigate(navController, route)
                 }
             }
@@ -115,12 +123,12 @@ fun Navigation() {
 //                showFloatingButton = true,
 //                showBackButton =
 //            ) {
-                HomeScreen(
-                    authViewModel,
-                    appUsageViewModel
-                ){
-                    onNavigate(navController,it)
-                }
+            HomeScreen(
+                authViewModel,
+                appUsageViewModel
+            ) {
+                onNavigate(navController, it)
+            }
 //            }
         }
 
@@ -179,30 +187,35 @@ fun Navigation() {
 
         composable(Screen.AppBlocker.route) {
             MainScaffold(navController, "App Blocker") {
-                AppBlockerScreen(Modifier.padding(it),appUsageViewModel)
+                AppBlockerScreen(Modifier.padding(it), appUsageViewModel)
             }
         }
 
         composable(Screen.WebBlocker.route) {
             MainScaffold(navController, "Web Blocker") {
-                WebBlockerScreen(Modifier.padding(it),appUsageViewModel)
+                WebBlockerScreen(Modifier.padding(it), appUsageViewModel)
             }
         }
 
 
         composable(Screen.AppLaunch.route) {
             MainScaffold(navController, "Web Blocker") {
-                WebBlockerScreen(Modifier.padding(it),appUsageViewModel)
+                WebBlockerScreen(Modifier.padding(it), appUsageViewModel)
             }
         }
         composable(Screen.Permission.route) {
             MainScaffold(navController, "Permission") {
-                PermissionScreen(Modifier.padding(it))
+                PermissionScreen(Modifier.padding(it)) {
+                    onNavigate(
+                        navController,
+                        it
+                    )
+                }
             }
         }
         composable(Screen.Features.route) {
             MainScaffold(navController, "Features") {
-                FeaturesScree(Modifier.padding(it)){ onNavigate(navController,it) }
+                FeaturesScree(Modifier.padding(it)) { onNavigate(navController, it) }
             }
         }
     }
@@ -216,6 +229,21 @@ fun onNavigate(navController: NavController, route: String) {
         navController.popBackStack()
     }
 }
+
+fun determineStartDestination(context: Context): String {
+    return if (!SharedPreference.isUserLoggedIn(context)) {
+        Screen.FingerPrint.route
+    } else if (!isChildLoggedIn(context)) {
+        if (!areAllPermissionsGranted(context)) {
+            return Screen.Permission.route
+        } else {
+            Screen.ChildDashBoard.route
+        }
+    } else {
+        Screen.PreLogin.route
+    }
+}
+
 
 sealed class Screen(val route: String) {
     data object Back : Screen("back")

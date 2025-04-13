@@ -19,11 +19,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.example.child_monitoring_app.core.preference.SharedPreference
+import com.example.child_monitoring_app.core.preference.SharedPreference.saveBlockedWeb
 import com.example.child_monitoring_app.core.style_guide.Text.RegularText
 import com.example.child_monitoring_app.core.style_guide.Text.SmallText
 import com.example.child_monitoring_app.core.style_guide.Text.SubHeadingText
+import com.example.child_monitoring_app.core.util.adultWebsites
+import com.example.child_monitoring_app.core.util.socialMediaWebsites
 import com.example.child_monitoring_app.features.app_usage.AppUsageViewModel
 
 
@@ -37,7 +42,18 @@ fun WebBlockerScreen(
     var searchQuery = remember { mutableStateOf("") }
     var blockAdultContent by remember { mutableStateOf(true) }
     var blockSocialMedia by remember { mutableStateOf(false) }
+    var blockSocialMediaList = remember { mutableListOf<String>() }
+    val context = LocalContext.current
+    val parentId = SharedPreference.getParentId(context) ?: ""
 
+    LaunchedEffect(Unit) {
+        appUsageViewModel.firebaseManager.fetchBlockedWebFromFirebase(
+            parentId,
+            appUsageViewModel.childId.value
+        ) { it ->
+            blockedWebsites += it
+        }
+    }
 
     Column(
         modifier = modifier
@@ -150,7 +166,9 @@ fun WebBlockerScreen(
 
                     Switch(
                         checked = blockSocialMedia,
-                        onCheckedChange = { blockSocialMedia = it },
+                        onCheckedChange = {
+                            blockSocialMedia = it
+                        },
                         colors = SwitchDefaults.colors(
                             checkedThumbColor = Color.White,
                             checkedTrackColor = Color(0xFF2196F3),
@@ -184,6 +202,7 @@ fun WebBlockerScreen(
                     SimplifiedBlockedWebsiteItemCard(
                         website = website,
                         onUnblock = {
+                            println("Unblocking $it")
                             blockedWebsites.remove(it)
                         }
                     )
@@ -194,10 +213,16 @@ fun WebBlockerScreen(
         // Bottom button
         Button(
             onClick = {
-                blockedWebsites.add(searchQuery.value)
+                val input = searchQuery.value.trim()
+                if (input.isNotEmpty() && !blockedWebsites.contains(input)) {
+                    blockedWebsites.add(input)
+                }
+                val combinedList = blockedWebsites.toMutableSet()
+                if (blockAdultContent) combinedList.addAll(adultWebsites)
+                if (blockSocialMedia) combinedList.addAll(socialMediaWebsites)
                 appUsageViewModel.firebaseManager.uploadBlockedWebList(
                     appUsageViewModel.childId.value,
-                    blockedWebsites
+                    combinedList.toList()
                 ) {
                     searchQuery.value = ""
                 }
@@ -266,7 +291,7 @@ fun SimplifiedBlockedWebsiteItemCard(
             ) {
                 Icon(
                     imageVector = Icons.Default.Lock,
-                    contentDescription = "Unblock ${website}",
+                    contentDescription = "{website}",
                     tint = Color(0xFFFF5252)
                 )
             }

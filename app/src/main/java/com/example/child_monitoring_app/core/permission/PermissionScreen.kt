@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -29,6 +30,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.app.NotificationManagerCompat
+import com.example.child_monitoring_app.core.navigation.Screen
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
@@ -36,13 +38,13 @@ import com.google.accompanist.permissions.rememberMultiplePermissionsState
 
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
-fun PermissionScreen(modifier: Modifier = Modifier) {
+fun PermissionScreen(modifier: Modifier = Modifier, onNavigate: (String) -> Unit) {
 
     val context = LocalContext.current
     val accessibilityGranted = remember { mutableStateOf(isAccessibilityEnabled(context)) }
     val usageStatsGranted = remember { mutableStateOf(isUsageStatsPermissionGranted(context)) }
     val drawOverAppsGranted = remember { mutableStateOf(Settings.canDrawOverlays(context)) }
-    val notificationGranted = remember { mutableStateOf(NotificationManagerCompat.from(context).areNotificationsEnabled()) }
+//    val notificationGranted = remember { mutableStateOf(NotificationManagerCompat.from(context).areNotificationsEnabled()) }
 
     val callPermission = Manifest.permission.READ_CALL_LOG
     val contactsPermission = Manifest.permission.READ_CONTACTS
@@ -52,7 +54,19 @@ fun PermissionScreen(modifier: Modifier = Modifier) {
         permissions = listOf(callPermission, contactsPermission, locationPermission)
     )
 
-    val activity = context as? Activity
+    val areAllRuntimePermissionsGranted = permissionState.allPermissionsGranted
+    val areAllSpecialPermissionsGranted = accessibilityGranted.value &&
+            usageStatsGranted.value &&
+            drawOverAppsGranted.value
+
+    LaunchedEffect(
+        areAllRuntimePermissionsGranted,
+        areAllSpecialPermissionsGranted
+    ) {
+        if (areAllRuntimePermissionsGranted && areAllSpecialPermissionsGranted) {
+
+        }
+    }
 
     Column(
         modifier = modifier
@@ -71,16 +85,19 @@ fun PermissionScreen(modifier: Modifier = Modifier) {
         }
 
         PermissionItem("Draw Over Apps", drawOverAppsGranted.value) {
-            val intent = Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:${context.packageName}"))
+            val intent = Intent(
+                Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                Uri.parse("package:${context.packageName}")
+            )
             context.startActivity(intent)
         }
 
-        PermissionItem("Notifications", notificationGranted.value) {
-            val intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
-                putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
-            }
-            context.startActivity(intent)
-        }
+//        PermissionItem("Notifications", notificationGranted.value) {
+//            val intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
+//                putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
+//            }
+//            context.startActivity(intent)
+//        }
 
         permissionState.permissions.forEach { perm ->
             val granted = perm.status.isGranted
@@ -98,7 +115,15 @@ fun PermissionScreen(modifier: Modifier = Modifier) {
                 accessibilityGranted.value = isAccessibilityEnabled(context)
                 usageStatsGranted.value = isUsageStatsPermissionGranted(context)
                 drawOverAppsGranted.value = Settings.canDrawOverlays(context)
-                notificationGranted.value = NotificationManagerCompat.from(context).areNotificationsEnabled()
+//                notificationGranted.value = NotificationManagerCompat.from(context).areNotificationsEnabled()
+            }
+        ) {
+            Text("Refresh Permissions")
+        }
+        Button(
+            modifier = Modifier.fillMaxWidth(),
+            onClick = {
+                onNavigate(Screen.ChildDashBoard.route)
             }
         ) {
             Text("Refresh Permissions")

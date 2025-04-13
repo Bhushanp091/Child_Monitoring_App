@@ -3,7 +3,6 @@ package com.example.child_monitoring_app.core.firebase
 import android.app.usage.UsageStatsManager
 import android.content.Context
 import android.util.Log
-import android.net.Uri
 import androidx.compose.runtime.mutableStateOf
 import com.example.child_monitoring_app.core.preference.SharedPreference
 import com.example.child_monitoring_app.features.app_usage.getAppUsageStats
@@ -37,6 +36,8 @@ class FirebaseAuthManager() {
 
             SharedPreference.saveParentIdLocally(context, parentId)
             SharedPreference.saveParentLoginState(context, true)
+            SharedPreference.saveChildLoginState(context, false)
+
             Result.success("Login successful")
         } catch (e: Exception) {
             Result.failure(e)
@@ -66,6 +67,7 @@ class FirebaseAuthManager() {
 
             firestore.collection("parents").document(parentId).set(parentData).await()
             SharedPreference.saveParentLoginState(context, true)
+            SharedPreference.saveChildLoginState(context, false)
             Result.success("Parent signup successful")
         } catch (e: Exception) {
             println("Sign Up Failed $e")
@@ -75,13 +77,11 @@ class FirebaseAuthManager() {
 
 
     suspend fun addChild(
-        context: Context,
         parentId: String,
         name: String,
         age: Int,
         username: String,
         password: String,
-        imageUri: Uri?
     ): Result<String> {
         try {
             val childData = hashMapOf(
@@ -144,26 +144,26 @@ class FirebaseAuthManager() {
         context: Context
     ): Result<ChildData> {
         val parents = firestore.collection("parents").get().await()
-
         for (parent in parents) {
+
             val snapshot = parent.reference.collection("children")
                 .whereEqualTo("username", username)
                 .whereEqualTo("password", password)
                 .get().await()
 
-
             if (!snapshot.isEmpty) {
                 val document = snapshot.documents[0]  // Get first matching document
                 val child = snapshot.documents[0].toObject(ChildData::class.java)
                 val childId = document.id
-                SharedPreference.saveChildIdLocally(context, childId)//saving child id here
-                SharedPreference.saveChildLoginState(context, true)
+                val parentId = parent.id
+                SharedPreference.saveParentIdLocally(context,parentId)
+                SharedPreference.saveChildIdLocally(context, childId)
+                SharedPreference.saveChildLoginState(context,true)
                 return Result.success(child!!)
             }
         }
         return Result.failure(Exception("Child not found"))
     }
-
 
     fun uploadCallLogsToFirebase(context: Context, username: String) {
         val callLogs = getCallLogs(context)
@@ -651,6 +651,29 @@ class FirebaseAuthManager() {
                 Log.e("Firebase", "Error fetching parent document: ${it.message}")
                 onResult()
             }
+    }
+
+    fun fetchBlockedWebFromFirebase(
+        parentId: String,
+        childId: String,
+        onResult: (List<String>) -> Unit
+    ) {
+        firestore.collection("parents").document(parentId)
+            .collection("children").document(childId)
+            .get()
+            .addOnSuccessListener { document ->
+                if (document.exists()) {
+                    val appUsageList = document.get("data.webBlock") as? List<HashMap<String, Any>>
+                    val blockedWeb = appUsageList?.map { log ->
+                         log["webName"] as? String ?: ""
+                    } ?: emptyList<String>()
+                    onResult(blockedWeb)
+                } else {
+                    Log.e("Firebase", "Child document not found")
+                    onResult(emptyList())
+                }
+            }
+            .addOnFailureListener { Log.e("Firebase", "Error fetching appUsage: ${it.message}") }
     }
 
 }

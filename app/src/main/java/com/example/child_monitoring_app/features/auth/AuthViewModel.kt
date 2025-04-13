@@ -3,9 +3,13 @@ package com.example.child_monitoring_app.features.auth
 import android.content.Context
 import android.net.Uri
 import androidx.compose.runtime.mutableStateOf
+import androidx.lifecycle.viewModelScope
 import com.example.child_monitoring_app.core.util.ChildData
 import com.example.child_monitoring_app.core.ui.BaseViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class AuthViewModel : BaseViewModel() {
@@ -50,17 +54,19 @@ class AuthViewModel : BaseViewModel() {
         firebaseManager.logOut()
     }
 
-    suspend fun addChild(
+    private val _status = MutableStateFlow<Result<String>?>(null)
+    val status: StateFlow<Result<String>?> = _status
+
+    fun addChild(
         parentId: String,
         name: String,
         age: Int,
         username: String,
         password: String,
-        imageUri: Uri?,
-        context: Context
-    ): Result<String> {
-        return withContext(Dispatchers.IO) {
-            firebaseManager.addChild(context, parentId, name, age, username, password, imageUri)
+    ) {
+        viewModelScope.launch {
+            val result = firebaseManager.addChild(parentId, name, age, username, password)
+            _status.value = result
         }
     }
 
