@@ -29,9 +29,13 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import com.example.child_monitoring_app.R
+import com.example.child_monitoring_app.core.common.CommonLoader
 import com.example.child_monitoring_app.core.common.ToastType
 import com.example.child_monitoring_app.core.common.toast
 import com.example.child_monitoring_app.core.navigation.Screen
+import com.example.child_monitoring_app.core.style_guide.Text.RegularText
+import com.example.child_monitoring_app.core.style_guide.Text.SmallText
+import com.example.child_monitoring_app.core.style_guide.Text.SubHeadingText
 import com.example.child_monitoring_app.features.theme.buttonColor
 import kotlinx.coroutines.launch
 
@@ -39,7 +43,8 @@ import kotlinx.coroutines.launch
 @Composable
 fun ParentSignupScreen(
     authViewModel: AuthViewModel,
-    onNavigate:(String)->Unit,
+    onSignUp:()->Unit,
+    onNavigate:(String)->Unit
 ) = with(authViewModel){
 
     val keyboardController = LocalSoftwareKeyboardController.current
@@ -51,7 +56,7 @@ fun ParentSignupScreen(
 
     LaunchedEffect(message.value) {
         if (message.value == "Login successful") {
-            onNavigate(Screen.ChildDashBoard.route)
+            onSignUp()
         }
         clearData()
     }
@@ -84,19 +89,9 @@ fun ParentSignupScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                Text(
-                    text = "Create Account",
-                    style = MaterialTheme.typography.headlineMedium,
-                    color = MaterialTheme.colorScheme.primary
-                )
+                SubHeadingText.SemiBold(title = "Create Account")
+                SmallText.Medium(title = "Sign up to get started")
 
-                Text(
-                    text = "Sign up to get started",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-
-                // Name TextField
                 OutlinedTextField(
                     value = name.value,
                     onValueChange = { name.value = it },
@@ -186,15 +181,11 @@ fun ParentSignupScreen(
                         )
                     },
                     trailingIcon = {
-                        val image = if (confirmPasswordVisible.value)
-                            Icons.Filled.Add
-                        else Icons.Filled.Info
-
                         IconButton(onClick = {
                             confirmPasswordVisible.value = !confirmPasswordVisible.value
                         }) {
                             Icon(
-                                imageVector = image,
+                                painter = painterResource(image),
                                 contentDescription = "Toggle confirm password visibility"
                             )
                         }
@@ -223,8 +214,10 @@ fun ParentSignupScreen(
                     onClick = {
                         if (name.value.isNotEmpty() && email.value.isNotEmpty() && password.value.isNotEmpty() && confirmPassword.value.isNotEmpty()) {
                             coroutineScope.launch {
+                                isLoading.value = true
                                 val result = authViewModel.parentSignUp(email.value, password.value, name.value,context)
                                 message.value = result.getOrDefault("Signup failed")
+                                isLoading.value = false
                                 context.toast(message.value, ToastType.ERROR)
                             }
                         } else {
@@ -261,5 +254,9 @@ fun ParentSignupScreen(
                 }
             }
         }
+    }
+
+    if (isLoading.value){
+        CommonLoader()
     }
 }

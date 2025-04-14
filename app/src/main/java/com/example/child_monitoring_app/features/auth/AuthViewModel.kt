@@ -29,6 +29,7 @@ class AuthViewModel : BaseViewModel() {
     var authFailed = mutableStateOf(false)
     var confirmPassword = mutableStateOf("")
     var confirmPasswordVisible= mutableStateOf(false)
+    val isLoading =  mutableStateOf(false)
 
 
 
@@ -96,5 +97,7 @@ class AuthViewModel : BaseViewModel() {
         passwordVisible.value = false
         isSignUp.value = false
         confirmPasswordVisible.value = false
+        message.value = ""
+        isLoading.value = false
     }
 }

@@ -11,6 +11,7 @@ import com.example.child_monitoring_app.features.call_log_history.Contact
 import com.example.child_monitoring_app.features.call_log_history.getCallLogs
 import com.example.child_monitoring_app.features.call_log_history.getContacts
 import com.example.child_monitoring_app.core.util.ChildData
+import com.example.child_monitoring_app.features.app_blocker.AppLaunchModel
 import com.example.child_monitoring_app.features.app_usage.AppUsageInfo
 import com.example.child_monitoring_app.features.app_usage.CallLogModel
 import com.google.android.gms.maps.model.LatLng
@@ -25,7 +26,6 @@ class FirebaseAuthManager() {
 
     private val auth: FirebaseAuth = FirebaseAuth.getInstance()
     private val firestore = FirebaseFirestore.getInstance()
-    private val storage = FirebaseStorage.getInstance().reference
 
 
     suspend fun parentLogin(email: String, password: String, context: Context): Result<String> {
@@ -76,7 +76,6 @@ class FirebaseAuthManager() {
         }
     }
 
-
     suspend fun addChild(
         parentId: String,
         name: String,
@@ -111,7 +110,6 @@ class FirebaseAuthManager() {
         }
     }
 
-
     suspend fun getChildrenList(): List<ChildData> {
         val parentId = auth.currentUser?.uid
         if (parentId == null) {
@@ -137,7 +135,6 @@ class FirebaseAuthManager() {
             emptyList()
         }
     }
-
 
     suspend fun childLogin(
         username: String,
@@ -261,7 +258,6 @@ class FirebaseAuthManager() {
             }
     }
 
-
     fun uploadAppUsageToFirebase(context: Context, username: String) {
 
         var selectedInterval = mutableStateOf(UsageStatsManager.INTERVAL_MONTHLY)
@@ -353,7 +349,6 @@ class FirebaseAuthManager() {
             .addOnFailureListener { Log.e("Firebase", "Error fetching appUsage: ${it.message}") }
     }
 
-
     suspend fun uploadContactsToFirebase(context: Context, username: String) {
         val callLogs = getContacts(context)
         println("Contacts $callLogs")
@@ -409,7 +404,6 @@ class FirebaseAuthManager() {
             }
     }
 
-
     fun fetchContactsFromFirebase(
         parentId: String,
         childId: String,
@@ -449,7 +443,6 @@ class FirebaseAuthManager() {
                 onResult(emptyList())
             }
     }
-
 
     fun uploadChildLocationToFirebase(childId: String, location: LatLng) {
         firestore.collection("parents")
@@ -493,7 +486,6 @@ class FirebaseAuthManager() {
             }
     }
 
-
     fun fetchChildLocationFromFirebase(
         parentId: String,
         childUsername: String, // use username to find the child
@@ -528,7 +520,6 @@ class FirebaseAuthManager() {
                 onResult(null)
             }
     }
-
 
     fun uploadBlockedAppList(username: String, appList: List<AppUsageInfo>, onResult: () -> Unit) {
 
@@ -678,7 +669,6 @@ class FirebaseAuthManager() {
     }
 
     fun uploadBatteryNetworkData(username: String, isConnected: Boolean, batteryLevel: Int) {
-
         firestore.collection("parents")
             .get()
             .addOnSuccessListener { parentSnapshot ->
@@ -745,5 +735,87 @@ class FirebaseAuthManager() {
             }
     }
 
+    fun uploadAppLaunchCountFirebase(
+        context: Context,
+        username: String
+    ) {
+        val firestore = FirebaseFirestore.getInstance()
+        val appLaunchData = SharedPreference.getAppLaunchData(context)
+        firestore.collection("parents").get()
+            .addOnSuccessListener { parentSnapshot ->
+                for (parentDoc in parentSnapshot.documents) {
+                    val parentId = parentDoc.id
+
+                    firestore.collection("parents").document(parentId)
+                        .collection("children")
+                        .whereEqualTo("username", username)
+                        .get()
+                        .addOnSuccessListener { childSnapshot ->
+                            if (!childSnapshot.isEmpty) {
+                                val childId = childSnapshot.documents[0].id
+                                val appLaunchMap = hashMapOf<String, Any>()
+
+                                for (log in appLaunchData) {
+                                    appLaunchMap[log.packageName] = mapOf(
+                                        "packageName" to log.packageName,
+                                        "count" to log.count
+                                    )
+                                }
+
+                                firestore.collection("parents").document(parentId)
+                                    .collection("children").document(childId)
+                                    .update("data.appLaunches", appLaunchMap)
+                                    .addOnSuccessListener {
+                                        Log.d("Firebase", "App Launch Count uploaded.")
+                                    }
+                                    .addOnFailureListener {
+                                        Log.e("Firebase", "Upload failed: ${it.message}")
+                                    }
+
+                            } else {
+                                Log.e("Firebase", "Child not found.")
+                            }
+                        }
+                }
+            }
+    }
+
+    fun fetchAppLaunchData(
+        parentId: String,
+        childId: String,
+        onResult: (List<AppLaunchModel>) -> Unit
+    ) {
+        val firestore = FirebaseFirestore.getInstance()
+
+        firestore.collection("parents").document(parentId)
+            .collection("children").document(childId)
+            .get()
+            .addOnSuccessListener { document ->
+                if (document.exists()) {
+                    val data = document.get("data.appLaunches") as? Map<*, *>
+                    val resultList = mutableListOf<AppLaunchModel>()
+
+                    data?.forEach { (_, value) ->
+                        if (value is Map<*, *>) {
+                            val packageName = value["packageName"] as? String ?: ""
+                            val count = (value["count"] as? Long)?.toInt() ?: 0
+
+                            if (packageName.isNotEmpty()) {
+                                resultList.add(AppLaunchModel(packageName, count))
+                            }
+                        }
+                    }
+
+                    onResult(resultList)
+                } else {
+                    Log.e("Firebase", "Document not found")
+                    onResult(emptyList())
+                }
+            }
+            .addOnFailureListener {
+                Log.e("Firebase", "Error fetching data: ${it.message}")
+                onResult(emptyList())
+            }
+    }
 
 }

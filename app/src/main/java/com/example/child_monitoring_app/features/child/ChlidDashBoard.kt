@@ -28,13 +28,6 @@ import network.chaintech.sdpcomposemultiplatform.sdp
 @Composable
 fun ChildDashBoardScreen(authViewModel: AuthViewModel,onNavigate:(String)->Unit) {
 
-    val context = LocalContext.current
-//    LaunchedEffect (Unit){
-//        if (!areAllPermissionsGranted(context)){
-//            onNavigate(Screen.Permission.route)
-//        }
-//    }
-
     Column (
         modifier = Modifier.fillMaxSize()
             .padding(horizontal = 10.sdp),

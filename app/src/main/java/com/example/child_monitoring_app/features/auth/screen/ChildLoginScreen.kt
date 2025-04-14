@@ -23,9 +23,14 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import com.example.child_monitoring_app.R
+import com.example.child_monitoring_app.core.common.CommonLoader
 import com.example.child_monitoring_app.core.common.ToastType
 import com.example.child_monitoring_app.core.common.toast
 import com.example.child_monitoring_app.core.navigation.Screen
+import com.example.child_monitoring_app.core.style_guide.Text.RegularText
+import com.example.child_monitoring_app.core.style_guide.Text.SmallText
+import com.example.child_monitoring_app.core.style_guide.Text.SubHeadingText
+import com.example.child_monitoring_app.features.app_blocker.scheduleAppLaunchUploadWorker
 import com.example.child_monitoring_app.features.auth.AuthViewModel
 import com.example.child_monitoring_app.features.theme.buttonColor
 import kotlinx.coroutines.launch
@@ -35,7 +40,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun ChildLoginScreen(
     authViewModel: AuthViewModel,
-    onNavigate: (String) -> Unit
+    onLogin:()->Unit,
 )= with(authViewModel) {
 
 
@@ -46,17 +51,13 @@ fun ChildLoginScreen(
         R.drawable.eye
     else R.drawable.eye_slash
 
-    LaunchedEffect(isLogIn.value) {
-        if (isLogIn.value) {
-            onNavigate(Screen.DashBoard.route)
-        }
-        clearData()
-    }
 
     LaunchedEffect(message.value) {
         if (message.value == "Login successful") {
-            onNavigate(Screen.ChildDashBoard.route)
+            scheduleAppLaunchUploadWorker(context)
+            onLogin()
         }
+        clearData()
     }
 
 
@@ -88,19 +89,8 @@ fun ChildLoginScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                Text(
-                    text = "Child Login",
-                    style = MaterialTheme.typography.headlineMedium,
-                    color = MaterialTheme.colorScheme.primary
-                )
-
-                Text(
-                    text = "Login to your children phone to get data",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-
-                // Email TextField
+                SubHeadingText.SemiBold(title = "Child Login")
+                SmallText.Medium( title = "Login to your children phone to get data")
                 OutlinedTextField(
                     value = username.value,
                     onValueChange = { username.value = it },
@@ -120,8 +110,6 @@ fun ChildLoginScreen(
                     singleLine = true,
                     shape = RoundedCornerShape(12.dp)
                 )
-
-                // Password TextField
                 OutlinedTextField(
                     value = password.value,
                     onValueChange = { password.value = it },
@@ -152,7 +140,6 @@ fun ChildLoginScreen(
                     ),
                     keyboardActions = KeyboardActions(
                         onDone = {
-                            // Perform login action
                             keyboardController?.hide()
                         }
                     ),
@@ -160,8 +147,6 @@ fun ChildLoginScreen(
                     singleLine = true,
                     shape = RoundedCornerShape(12.dp)
                 )
-
-                // Forgot Password
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.End
@@ -178,7 +163,9 @@ fun ChildLoginScreen(
                     onClick = {
                         if (username.value.isNotEmpty() && password.value.isNotEmpty()) {
                             coroutineScope.launch {
+                                isLoading.value = true
                                 val result = authViewModel.childLogin(username.value, password.value, context)
+                                isLoading.value = false
                                 message.value =
                                     if (result.isSuccess) "Login successful" else "Login failed"
                                 context.toast(message.value, ToastType.ERROR)
@@ -204,6 +191,10 @@ fun ChildLoginScreen(
 
             }
         }
+    }
+
+    if (isLoading.value){
+        CommonLoader()
     }
 }
 

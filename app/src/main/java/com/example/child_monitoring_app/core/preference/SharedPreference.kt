@@ -1,6 +1,7 @@
 package com.example.child_monitoring_app.core.preference
 
 import android.content.Context
+import com.example.child_monitoring_app.features.app_blocker.AppLaunchModel
 
 
 object SharedPreference {
@@ -19,10 +20,21 @@ object SharedPreference {
         sharedPreferences.edit().putString(KEY_CHILD_ID, parentId).apply()
     }
 
+    fun saveChildUsernameLocally(context: Context, parentId: String) {
+        val sharedPreferences = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+        sharedPreferences.edit().putString(KEY_CHILD_USERNAME, parentId).apply()
+    }
+
     fun getChildId(context: Context): String? {
         val sharedPreferences = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
         return sharedPreferences.getString(KEY_CHILD_ID, null)
     }
+
+    fun getChildUsername(context: Context): String? {
+        val sharedPreferences = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+        return sharedPreferences.getString(KEY_CHILD_USERNAME, null)
+    }
+
 
 
     fun saveParentLoginState(context: Context, isLoggedIn: Boolean = false) {
@@ -70,13 +82,23 @@ object SharedPreference {
     }
 
 
+    fun getAppLaunchData(context: Context): List<AppLaunchModel> {
+        val prefs = context.getSharedPreferences(APP_LAUNCH_PREFS, Context.MODE_PRIVATE)
+        return prefs.all.mapNotNull {
+            val count = it.value as? Int ?: return@mapNotNull null
+            AppLaunchModel(packageName = it.key, count = count)
+        }
+    }
+
 
     private const val PREF_NAME = "child_monitor_pref"
     private const val KEY_PARENT_ID = "parentId"
     private const val KEY_CHILD_ID = "child_id"
+    private const val KEY_CHILD_USERNAME = "child_username"
     private const val PARENT_IS_LOGGED_IN = "is_parent_loggedIn"
     private const val CHILD_IS_LOGGED_IN = "is_child_loggedIn"
     private const val BLOCKED_PREFS = "blocker_prefs"
     private const val BLOCKED_WEB_PREFS = "web_prefs"
+    const val APP_LAUNCH_PREFS = "app_launch_prefs"
 
 }

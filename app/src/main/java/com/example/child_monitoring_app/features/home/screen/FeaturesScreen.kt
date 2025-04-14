@@ -27,7 +27,7 @@ import network.chaintech.sdpcomposemultiplatform.sdp
 
 
 @Composable
-fun FeaturesScree(modifier: Modifier = Modifier, onNavigate: (String) -> Unit) {
+fun FeaturesScreen(modifier: Modifier = Modifier, onNavigate: (String) -> Unit) {
 
     val features = listOf(
         MonitoringFeature(

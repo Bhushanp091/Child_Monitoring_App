@@ -42,11 +42,13 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.child_monitoring_app.R
 import com.example.child_monitoring_app.core.navigation.Screen
+import com.example.child_monitoring_app.core.preference.SharedPreference.saveChildUsernameLocally
 import com.example.child_monitoring_app.core.style_guide.Text.RegularText
 import com.example.child_monitoring_app.core.style_guide.Text.SmallText
 import com.example.child_monitoring_app.core.style_guide.Text.SubHeadingText
@@ -66,6 +68,7 @@ fun ChildListScreen(
     onNavigate: (String) -> Unit
 ) = with(homeViewModel) {
     val coroutineScope = rememberCoroutineScope()
+    val context = LocalContext.current
 
     LaunchedEffect(Unit) {
         coroutineScope.launch {
@@ -205,6 +208,7 @@ fun ChildListScreen(
                             appUsageViewModel.childId.value = selectedChild.username
                             appUsageViewModel.childName.value = selectedChild.name
                             authViewModel.childId.value = selectedChild.username
+                            saveChildUsernameLocally(context,selectedChild.username)
                             authViewModel.childName.value = selectedChild.name
                             onNavigate(Screen.DashBoard.route)
                         }

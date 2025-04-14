@@ -23,6 +23,7 @@ import com.example.child_monitoring_app.core.preference.SharedPreference.isChild
 import com.example.child_monitoring_app.core.ui.BaseViewModel
 import com.example.child_monitoring_app.core.util.areAllPermissionsGranted
 import com.example.child_monitoring_app.features.app_blocker.screen.AppBlockerScreen
+import com.example.child_monitoring_app.features.app_blocker.screen.AppLaunchScreen
 import com.example.child_monitoring_app.features.app_blocker.screen.WebBlockerScreen
 import com.example.child_monitoring_app.features.child.ChildDashBoardScreen
 import com.example.child_monitoring_app.features.home.screen.ChildListScreen
@@ -37,9 +38,8 @@ import com.example.child_monitoring_app.features.auth.screen.ChildLoginScreen
 import com.example.child_monitoring_app.features.auth.screen.ParentLoginScreen
 import com.example.child_monitoring_app.features.auth.screen.ParentSignupScreen
 import com.example.child_monitoring_app.features.home.HomeViewModel
-import com.example.child_monitoring_app.features.home.screen.BatteryScreen
-import com.example.child_monitoring_app.features.home.screen.FeaturesScree
-import com.example.child_monitoring_app.features.network.NetworkStatusScreen
+import com.example.child_monitoring_app.features.home.screen.FeaturesScreen
+import kotlin.math.log
 
 
 @Composable
@@ -73,19 +73,45 @@ fun Navigation() {
 
         composable(Screen.SignUp.route) {
             MainScaffold(navController, "Sign Up") {
-                ParentSignupScreen(authViewModel) { onNavigate(navController, it) }
+                ParentSignupScreen(authViewModel, onSignUp = {
+                    navController.navigate(Screen.ShowChildList.route) {
+                        popUpTo(Screen.ShowChildList.route) {
+                            inclusive = true
+                        }
+                    }
+                }) { onNavigate(navController, it) }
             }
         }
 
         composable(Screen.ChildLogin.route) {
             MainScaffold(navController, "Child Login") {
-                ChildLoginScreen(authViewModel) { onNavigate(navController, it) }
+                ChildLoginScreen(authViewModel, onLogin = {
+                    navController.navigate(Screen.ChildDashBoard.route) {
+                        popUpTo(Screen.ChildDashBoard.route) {
+                            inclusive = true
+                        }
+                    }
+                })
             }
         }
 
         composable(Screen.ParentLogin.route) {
             MainScaffold(navController, "Login") {
-                ParentLoginScreen(authViewModel) { onNavigate(navController, it) }
+                ParentLoginScreen(
+                    authViewModel,
+                    onLogin = {
+                        navController.navigate(Screen.ShowChildList.route) {
+                            popUpTo(Screen.ShowChildList.route) {
+                                inclusive = true
+                            }
+                        }
+                    }
+                ) {
+//                    onNavigate(
+//                        navController,
+//                        it
+//                    )
+                }
             }
         }
 
@@ -200,7 +226,7 @@ fun Navigation() {
 
         composable(Screen.AppLaunch.route) {
             MainScaffold(navController, "Web Blocker") {
-                WebBlockerScreen(Modifier.padding(it), appUsageViewModel)
+                AppLaunchScreen(Modifier.padding(it), appUsageViewModel)
             }
         }
         composable(Screen.Permission.route) {
@@ -215,7 +241,7 @@ fun Navigation() {
         }
         composable(Screen.Features.route) {
             MainScaffold(navController, "Features") {
-                FeaturesScree(Modifier.padding(it)) { onNavigate(navController, it) }
+                FeaturesScreen(Modifier.padding(it)) { onNavigate(navController, it) }
             }
         }
     }

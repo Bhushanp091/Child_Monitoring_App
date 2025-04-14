@@ -24,10 +24,14 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.fragment.app.FragmentActivity
 import com.example.child_monitoring_app.R
+import com.example.child_monitoring_app.core.common.CommonLoader
 import com.example.child_monitoring_app.features.auth.BiometricAuthUtil
 import com.example.child_monitoring_app.core.common.ToastType
 import com.example.child_monitoring_app.core.common.toast
 import com.example.child_monitoring_app.core.navigation.Screen
+import com.example.child_monitoring_app.core.style_guide.Text.RegularText
+import com.example.child_monitoring_app.core.style_guide.Text.SmallText
+import com.example.child_monitoring_app.core.style_guide.Text.SubHeadingText
 import com.example.child_monitoring_app.features.auth.AuthViewModel
 import com.example.child_monitoring_app.features.theme.buttonColor
 import kotlinx.coroutines.launch
@@ -37,8 +41,9 @@ import kotlinx.coroutines.launch
 @Composable
 fun ParentLoginScreen(
     authViewModel: AuthViewModel,
-    onNavigate:(String)->Unit
-) = with(authViewModel){
+    onLogin:()->Unit,
+    onNavigate: (String) -> Unit
+) = with(authViewModel) {
 
     val keyboardController = LocalSoftwareKeyboardController.current
     val coroutineScope = rememberCoroutineScope()
@@ -49,7 +54,7 @@ fun ParentLoginScreen(
 
     LaunchedEffect(isLogIn.value) {
         if (isLogIn.value) {
-            onNavigate(Screen.ShowChildList.route)
+            onLogin()
         }
         clearData()
     }
@@ -74,17 +79,8 @@ fun ParentLoginScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                Text(
-                    text = "Welcome Back",
-                    style = MaterialTheme.typography.headlineMedium,
-                    color = MaterialTheme.colorScheme.primary
-                )
-
-                Text(
-                    text = "Sign in to continue",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                SubHeadingText.SemiBold(title = "Welcome Back")
+                SmallText.Medium(title = "Sign in to continue")
 
                 OutlinedTextField(
                     value = email.value,
@@ -161,10 +157,15 @@ fun ParentLoginScreen(
                     onClick = {
                         if (email.value.isNotEmpty() && password.value.isNotEmpty()) {
                             coroutineScope.launch {
+                                isLoading.value = true
                                 val result =
-                                    if (isSignUp.value) authViewModel.parentSignUp(email.value, password.value, name.value,context)
-                                    else authViewModel.parentLogin(email.value, password.value, context)
+                                    authViewModel.parentLogin(
+                                        email.value,
+                                        password.value,
+                                        context
+                                    )
                                 message.value = result.getOrDefault("Wrong Credentials")
+                                isLoading.value = false
                                 context.toast(message.value, ToastType.ERROR)
                                 if (message.value != "Wrong Credentials") {
                                     /***BioMetric***/
@@ -176,14 +177,19 @@ fun ParentLoginScreen(
 //                                                onAuthenticationSuccess()
                                                 isLogIn.value = true
                                             },
-                                            onError = { _, errorMessage ->
-                                                authStatus .value= "Authentication error: $errorMessage"
+                                            onError = {
+                                                      _, errorMessage ->
+                                                authStatus.value =
+                                                    "Authentication error: $errorMessage"
                                             },
                                             onFailed = {
-                                                authStatus.value = "Authentication failed. Please try again."
+                                                authStatus.value =
+                                                    "Authentication failed. Please try again."
                                             }
                                         )
                                     } else {
+//                                        onNavigate(Screen.ShowChildList.route)
+                                        onLogin()
                                         context.toast("Biometric authentication is not available")
                                     }
                                 }
@@ -210,22 +216,20 @@ fun ParentLoginScreen(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.Center
                 ) {
-                    Text(
-                        text = "Don't have an account? ",
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                    Text(
-                        "Register yourself",
+                    SmallText.Medium(title = "Don't have an account? ")
+                    SmallText.Medium(
+                        title = "Register yourself",
                         modifier = Modifier.clickable {
                             onNavigate(Screen.SignUp.route)
                         },
-                        color = MaterialTheme.colorScheme.primary
                     )
-                        Modifier.clickable { onNavigate(Screen.SignUp.route) }
-
                 }
                 Text(text = message.value, color = MaterialTheme.colorScheme.error)
             }
         }
+    }
+
+    if (isLoading.value) {
+        CommonLoader()
     }
 }
