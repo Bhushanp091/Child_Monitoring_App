@@ -28,14 +28,14 @@ fun ShowLocationScreen(locationViewModel: LocationViewModel, authViewModel: Auth
             childUsername =  authViewModel.childId.value
         ) {
             println("Current :Location $it")
-            locationViewModel.childLocation.value = it ?: LatLng(19.076090, 72.877426)
+            locationViewModel.childLocation.value = it ?: LatLng(19.047988, 72.913177)
         }
     }
 
 
     val cameraPositionState = rememberCameraPositionState {
         position = CameraPosition.fromLatLngZoom(
-            locationViewModel.childLocation.value ?: LatLng(19.076090, 72.877426),
+            locationViewModel.childLocation.value ?: LatLng(19.047988, 72.913177),
             15f
         )
     }
@@ -46,7 +46,7 @@ fun ShowLocationScreen(locationViewModel: LocationViewModel, authViewModel: Auth
     ) {
         Marker(
             state = MarkerState(
-                position = locationViewModel.childLocation.value ?: LatLng(19.076090, 72.877426)
+                position = locationViewModel.childLocation.value ?: LatLng(19.047988, 72.913177)
             ), title = "Child Location"
         )
     }
