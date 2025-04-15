@@ -54,14 +54,6 @@ fun Navigation() {
     val context = LocalContext.current
 
 
-//    val startDestinationId = if (SharedPreference.isUserLoggedIn(context) ) {
-//        Screen.FingerPrint.route
-//    } else if (isChildLoggedIn(context)){
-//        Screen.ChildDashBoard.route
-//    } else{
-//        Screen.PreLogin.route
-//    }
-
     NavHost(
         navController = navController,
         startDestination = determineStartDestination(context)
@@ -107,10 +99,10 @@ fun Navigation() {
                         }
                     }
                 ) {
-//                    onNavigate(
-//                        navController,
-//                        it
-//                    )
+                    onNavigate(
+                        navController,
+                        it
+                    )
                 }
             }
         }
@@ -201,7 +193,17 @@ fun Navigation() {
 
         composable(Screen.ChildDashBoard.route) {
             MainScaffold(navController, "DashBoard") {
-                ChildDashBoardScreen(authViewModel) { onNavigate(navController, it) }
+                ChildDashBoardScreen(
+                    authViewModel,
+                    onLogOut = {
+                        navController.navigate(Screen.PreLogin.route){
+                            popUpTo(Screen.PreLogin.route){
+                                inclusive = true
+                            }
+                            launchSingleTop = true
+                        }
+                    }
+                ) { onNavigate(navController, it) }
             }
         }
 

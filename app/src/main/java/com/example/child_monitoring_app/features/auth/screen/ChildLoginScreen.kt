@@ -54,7 +54,6 @@ fun ChildLoginScreen(
 
     LaunchedEffect(message.value) {
         if (message.value == "Login successful") {
-            scheduleAppLaunchUploadWorker(context)
             onLogin()
         }
         clearData()

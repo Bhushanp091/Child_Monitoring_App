@@ -58,7 +58,6 @@ import com.example.child_monitoring_app.core.util.CommonUtil.formatMillisToTime
 import com.example.child_monitoring_app.features.app_usage.AppUsageInfo
 import com.example.child_monitoring_app.features.app_usage.AppUsageViewModel
 import com.example.child_monitoring_app.features.app_usage.CallLogModel
-import com.example.child_monitoring_app.features.app_usage.hasUsagePermission
 import com.example.child_monitoring_app.features.call_log_history.convertTimestampToTimeOnly
 import com.example.child_monitoring_app.features.home.component.HomeScreenTopBar
 import com.example.child_monitoring_app.features.network.NetworkStatusTracker
@@ -87,20 +86,13 @@ fun HomeScreen(
     val callLogFlag = remember { mutableStateOf(true) }
 
     LaunchedEffect(selectedInterval.value) {
-        val calendar = Calendar.getInstance()
-        val endTime = calendar.timeInMillis
-        calendar.add(selectedInterval.value, -1) // -1 Day, -1 Week, or -1 Month
-        val startTime = calendar.timeInMillis
-        if (hasUsagePermission(context)) {
-//            usageData = getAppUsageStats(context, startTime, endTime)
-            appUsageViewModel.firebaseManager.fetchAppUsageFromFirebase(
-                parenId,
-                appUsageViewModel.childId.value
-            ) {
-                if (flag.value) {
-                    appUsageViewModel.usageData.value = it
-                    flag.value = !flag.value
-                }
+        appUsageViewModel.firebaseManager.fetchAppUsageFromFirebase(
+            parenId,
+            appUsageViewModel.childId.value
+        ) {
+            if (flag.value) {
+                appUsageViewModel.usageData.value = it
+                flag.value = !flag.value
             }
         }
     }
@@ -122,7 +114,7 @@ fun HomeScreen(
             appUsageViewModel.firebaseManager.fetchBatteryAndNetworkData(
                 parenId,
                 appUsageViewModel.childId.value,
-            ){battery,isActive->
+            ) { battery, isActive ->
                 println("Battery Percentage $battery $isActive")
                 isConnected = isActive
                 batteryLevel = battery.toString()
@@ -177,7 +169,7 @@ fun HomeScreen(
                 name = authViewModel.childName.value,
                 isActive = isConnected,
                 batteryPercentage = batteryLevel
-            ){onNavigate(Screen.ShowChildList.route)}
+            ) { onNavigate(Screen.ShowChildList.route) }
 
             Spacer(modifier = Modifier.height(24.dp))
             Row(
@@ -185,7 +177,10 @@ fun HomeScreen(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                SubHeadingText.SemiBold(title = "Features", modifier = Modifier.padding(start = 3.sdp))
+                SubHeadingText.SemiBold(
+                    title = "Features",
+                    modifier = Modifier.padding(start = 3.sdp)
+                )
 
                 TextButton(
                     onClick = { onNavigate(Screen.Features.route) },

@@ -33,70 +33,60 @@ import network.chaintech.sdpcomposemultiplatform.sdp
 @Composable
 fun AppUsageScreen(
     appUsageViewModel: AppUsageViewModel,
-    modifier: Modifier
-)= with(appUsageViewModel) {
+    modifier: Modifier = Modifier
+) = with(appUsageViewModel) {
 
     val context = LocalContext.current
-    val parenId = SharedPreference.getParentId(context) ?: ""
-
+    val parentId = SharedPreference.getParentId(context) ?: ""
 
     LaunchedEffect(selectedInterval.value) {
-        val calendar = Calendar.getInstance()
-        val endTime = calendar.timeInMillis
-        calendar.add(selectedInterval.value, -1) // -1 Day, -1 Week, or -1 Month
-        val startTime = calendar.timeInMillis
-        if (hasUsagePermission(context)) {
-//            usageData = getAppUsageStats(context, startTime, endTime)
-            appUsageViewModel.firebaseManager.fetchAppUsageFromFirebase(
-                parenId,
-                appUsageViewModel.childId.value
-            ) {
-                if (flag.value) {
-                    appUsageViewModel.usageData.value = it
-                    flag.value = !flag.value
-                }
-            }
+        val interval = when (selectedInterval.value) {
+            Calendar.DAY_OF_MONTH -> "daily"
+            Calendar.WEEK_OF_YEAR -> "weekly"
+            else -> "monthly"
+        }
+
+        firebaseManager.fetchAppUsageFromFirebase(
+            parentId,
+            childId.value,
+            intervalType = interval
+        ) { usageList ->
+            usageData.value = usageList
         }
     }
 
     Column(
-        modifier = modifier
-            .fillMaxSize(),
-        verticalArrangement = Arrangement.Center,
+        modifier = modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.Top,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
 
-        if (!hasUsagePermission(context)) {
-            Button(onClick = {
-                requestUsagePermission(context)
-            }) {
-                Text("Grant Usage Access")
-            }
-        } else {
-//            if (appUsageViewModel.showLoader.value){
-//                CircularProgressIndicator()
-//            }else{
-            LazyColumn(
-                modifier = Modifier.fillMaxSize()
-            ) {
-                item {
-                    Spacer(modifier = Modifier.height(10.sdp))
-                    Row {
-                        Button(onClick = { selectedInterval.value = Calendar.DAY_OF_MONTH }) {
-                            Text("Daily")
-                        }
-                        Spacer(modifier = Modifier.width(8.sdp))
-                        Button(onClick = { selectedInterval.value = Calendar.WEEK_OF_YEAR }) {
-                            Text("Weekly")
-                        }
-                        Spacer(modifier = Modifier.width(8.sdp))
-                        Button(onClick = { selectedInterval.value = Calendar.MONTH }) {
-                            Text("Monthly")
-                        }
-                    }
-                    Spacer(modifier = Modifier.height(16.sdp))
+        LazyColumn(modifier = Modifier.fillMaxSize()) {
+            item {
+                Spacer(modifier = Modifier.height(16.sdp))
+                Row(
+                    horizontalArrangement = Arrangement.Center,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    IntervalButton("Daily", Calendar.DAY_OF_MONTH, selectedInterval)
+                    Spacer(modifier = Modifier.width(8.sdp))
+                    IntervalButton("Weekly", Calendar.WEEK_OF_YEAR, selectedInterval)
+                    Spacer(modifier = Modifier.width(8.sdp))
+                    IntervalButton("Monthly", Calendar.MONTH, selectedInterval)
                 }
-                items(appUsageViewModel.usageData.value.toList()) { appUsageInfo ->
+                Spacer(modifier = Modifier.height(16.sdp))
+            }
+
+            if (usageData.value.isEmpty()) {
+                item {
+                    Text(
+                        "No usage data available",
+                        modifier = Modifier.padding(16.sdp),
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+            } else {
+                items(usageData.value) { appUsageInfo ->
                     AppUsageItem(appUsageInfo)
                 }
             }
@@ -166,19 +156,23 @@ fun AppUsageItem(appUsageInfo: AppUsageInfo) {
     )
 }
 
-fun hasUsagePermission(context: Context): Boolean {
-    val appOps = context.getSystemService(Context.APP_OPS_SERVICE) as AppOpsManager
-    val mode = appOps.checkOpNoThrow(
-        AppOpsManager.OPSTR_GET_USAGE_STATS,
-        android.os.Process.myUid(),
-        context.packageName
-    )
-    return mode == AppOpsManager.MODE_ALLOWED
+@Composable
+fun IntervalButton(
+    label: String,
+    calendarConstant: Int,
+    selectedInterval: MutableState<Int>
+) {
+    val isSelected = selectedInterval.value == calendarConstant
+    Button(
+        onClick = { selectedInterval.value = calendarConstant },
+        colors = ButtonDefaults.buttonColors(
+            containerColor = if (isSelected) MaterialTheme.colorScheme.primary
+            else MaterialTheme.colorScheme.surfaceVariant
+        )
+    ) {
+        Text(label)
+    }
 }
 
-fun requestUsagePermission(context: Context) {
-    val intent = Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)
-    context.startActivity(intent)
-}
 
 

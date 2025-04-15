@@ -3,80 +3,53 @@ package com.example.child_monitoring_app.features.app_usage
 import android.app.usage.UsageEvents
 import android.app.usage.UsageStatsManager
 import android.content.Context
+import android.content.Intent
+import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.graphics.drawable.Drawable
 import android.util.LruCache
 
 fun getAppUsageStats(context: Context, startTime: Long, endTime: Long): List<AppUsageInfo> {
-    val usageStatsManager =
-        context.getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
-    val usageEvents = usageStatsManager.queryEvents(startTime, endTime)
+    val usageStatsManager = context.getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
+
+    val usageStatsList = usageStatsManager.queryUsageStats(
+        UsageStatsManager.INTERVAL_DAILY,
+        startTime,
+        endTime
+    )
+
     val packageManager = context.packageManager
 
+    return usageStatsList
+        .filter { it.totalTimeInForeground > 0 }
+        .mapNotNull { usageStats ->
+            try {
+                val appInfo = packageManager.getApplicationInfo(usageStats.packageName, 0)
+                val appName = packageManager.getApplicationLabel(appInfo).toString()
+                val icon = appInfo.loadIcon(packageManager)
 
-    val iconCache = LruCache<String, Drawable>(100)
-
-    // Track both usage time and last used timestamp
-    data class UsageData(var totalTime: Long = 0L, var lastUsed: Long = 0L)
-
-    val appUsageMap = mutableMapOf<String, UsageData>()
-
-    var lastForegroundTime = 0L
-    var lastPackageName: String? = null
-
-    val event = UsageEvents.Event()
-    while (usageEvents.hasNextEvent()) {
-        usageEvents.getNextEvent(event)
-
-        when (event.eventType) {
-            UsageEvents.Event.MOVE_TO_FOREGROUND -> {
-                lastForegroundTime = event.timeStamp
-                lastPackageName = event.packageName
-            }
-
-            UsageEvents.Event.MOVE_TO_BACKGROUND -> {
-                if (lastPackageName != null && lastForegroundTime > 0) {
-                    val usageTime = event.timeStamp - lastForegroundTime
-                    val usageData = appUsageMap.getOrDefault(lastPackageName, UsageData())
-                    usageData.totalTime += usageTime
-                    usageData.lastUsed = event.timeStamp
-                    appUsageMap[lastPackageName!!] = usageData
-
-                    lastForegroundTime = 0L
-                    lastPackageName = null
-                }
-            }
-        }
-    }
-    return appUsageMap.map { (packageName, usageData) ->
-        // First try to get icon from cache
-        var icon = iconCache.get(packageName)
-
-        if (icon == null) {
-            icon = try {
-                packageManager.getApplicationIcon(packageName).also {
-                    // Store in cache for future use
-                    iconCache.put(packageName, it)
-                }
-            } catch (e: PackageManager.NameNotFoundException) {
+                AppUsageInfo(
+                    packageName = usageStats.packageName,
+                    appName = appName,
+                    usageTime = usageStats.totalTimeInForeground.toString(),
+                    lastTimeUsed = usageStats.lastTimeUsed.toString()
+                )
+            } catch (e: Exception) {
                 null
             }
         }
+}
 
-        val appName = try {
-            val appInfo = packageManager.getApplicationInfo(packageName, 0)
-            // Load label using the ApplicationInfo object
-            packageManager.getApplicationLabel(appInfo).toString()
-        } catch (e: PackageManager.NameNotFoundException) {
-            packageName // Fallback to package name
-        }
 
-        AppUsageInfo(
-            packageName = packageName,
-            appName = appName,
-            usageTime = usageData.totalTime.toString(),
-            icon = icon.toString(),
-            lastTimeUsed = usageData.lastUsed.toString()
-        )
-    }.sortedByDescending { it.lastTimeUsed }
+fun isUserApp(packageManager: PackageManager, packageName: String): Boolean {
+    return try {
+        val appInfo = packageManager.getApplicationInfo(packageName, 0)
+        val isSystemApp = (appInfo.flags and ApplicationInfo.FLAG_SYSTEM) != 0
+        val isLauncher = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME)
+        val resolveInfo = packageManager.resolveActivity(isLauncher, PackageManager.MATCH_DEFAULT_ONLY)
+        val isDefaultLauncher = resolveInfo?.activityInfo?.packageName == packageName
+        !isSystemApp && !isDefaultLauncher
+    } catch (e: PackageManager.NameNotFoundException) {
+        false
+    }
 }

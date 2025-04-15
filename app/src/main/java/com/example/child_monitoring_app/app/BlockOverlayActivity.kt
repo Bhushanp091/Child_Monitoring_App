@@ -68,16 +68,10 @@ class BlockOverlayActivity : ComponentActivity() {
 
         setContent {
             BlockedUI {
-                // Instead of closing the app entirely, just finish this activity
-                // This will prevent the brief flash of the blocked app
                 finish()
-                // We'll manage killing the app through the service
             }
         }
     }
-
-    // Override back button to prevent bypassing
-
 }
 
 @Composable

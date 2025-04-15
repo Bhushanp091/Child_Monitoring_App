@@ -82,18 +82,18 @@ fun AddChildScreen(
         R.drawable.eye
     else R.drawable.eye_slash
 
-    LaunchedEffect(message.value) {
-        if (message.value == "Success") {
-            name.value = ""
-            age.value = ""
-            username.value = ""
-            password.value = ""
-            context.toast("Child Added Successfully")
-            message.value = ""
-            delay(1000)
-            onNavigateBack()
-        }
-    }
+//    LaunchedEffect(message.value) {
+//        if (message.value == "Success") {
+//            name.value = ""
+//            age.value = ""
+//            username.value = ""
+//            password.value = ""
+//            context.toast("Child Added Successfully")
+//            message.value = ""
+//            delay(1000)
+//            onNavigateBack()
+//        }
+//    }
 
     val status by authViewModel.status.collectAsState()
 
@@ -102,8 +102,11 @@ fun AddChildScreen(
         status?.let {
             if (it.isSuccess) {
                 context.toast("Child Added")
+                clearData()
+                onNavigateBack()
             } else {
                 context.toast("Error ")
+                clearData()
             }
         }
     }
@@ -250,6 +253,7 @@ fun AddChildScreen(
                 // Sign Up Button
                 Button(
                     onClick = {
+                        isLoading.value = true
                         if (name.value.isNotEmpty() && age.value.isNotEmpty() && password.value.isNotEmpty() && username.value.isNotEmpty()) {
                             authViewModel.addChild(
                                 parentId,
@@ -261,6 +265,7 @@ fun AddChildScreen(
                         } else {
                             context.toast("Enter all fields", ToastType.ERROR)
                         }
+                        isLoading.value = false
                     },
                     modifier = Modifier
                         .fillMaxWidth()

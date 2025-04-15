@@ -17,5 +17,17 @@ class HomeViewModel() : BaseViewModel() {
     var childList = mutableStateOf<List<ChildData>>(emptyList())
     var loadingChilList = mutableStateOf(true)
     var errorMessage = mutableStateOf("")
+    val isLoading = mutableStateOf(false)
+
+
+    fun clearData(){
+        name.value = ""
+        age.value = ""
+        username.value = ""
+        password.value = ""
+        message.value = ""
+        isLoading.value = false
+        passwordVisible.value = false
+    }
 
 }

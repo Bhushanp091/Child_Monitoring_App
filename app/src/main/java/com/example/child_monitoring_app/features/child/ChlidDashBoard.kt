@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -16,17 +17,24 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import com.example.child_monitoring_app.core.preference.SharedPreference
 import com.example.child_monitoring_app.core.common.CommonButton
+import com.example.child_monitoring_app.core.common.toast
 import com.example.child_monitoring_app.core.navigation.Screen
 import com.example.child_monitoring_app.core.preference.SharedPreference.saveBlockedApps
 import com.example.child_monitoring_app.core.preference.SharedPreference.saveBlockedWeb
+import com.example.child_monitoring_app.core.util.areAllPermissionsGranted
 import com.example.child_monitoring_app.features.auth.AuthViewModel
 import com.example.child_monitoring_app.features.home.screen.getBatteryPercentage
 import com.example.child_monitoring_app.features.network.NetworkStatusTracker
+import com.example.child_monitoring_app.workManager.BackgroundDataUploader
 import com.google.android.gms.maps.model.LatLng
 import network.chaintech.sdpcomposemultiplatform.sdp
 
 @Composable
-fun ChildDashBoardScreen(authViewModel: AuthViewModel,onNavigate:(String)->Unit) {
+fun ChildDashBoardScreen(
+    authViewModel: AuthViewModel,
+    onLogOut:()->Unit,
+    onNavigate:(String)->Unit
+) {
 
     Column (
         modifier = Modifier.fillMaxSize()
@@ -43,8 +51,16 @@ fun ChildDashBoardScreen(authViewModel: AuthViewModel,onNavigate:(String)->Unit)
         var batteryLevel by remember { mutableStateOf(getBatteryPercentage(context)) }
 
 
+        LaunchedEffect (Unit){
+            if(!areAllPermissionsGranted(context)) {
+                BackgroundDataUploader.schedulePeriodicUpload(context)
+            }else{
+                context.toast("Permission not granted")
+            }
+        }
+
         CommonButton(
-            text = "Hmmmmmmmmmmmmmmmm :)",
+            text = "Upload data",
             onClick = {
                 authViewModel.storeChildData(context, childLocation,childId,isConnected,batteryLevel)
             }
@@ -81,7 +97,9 @@ fun ChildDashBoardScreen(authViewModel: AuthViewModel,onNavigate:(String)->Unit)
             onClick = {
                 SharedPreference.logout(context)
                 authViewModel.logOut()
-                onNavigate(Screen.PreLogin.route)
+                onLogOut()
+                BackgroundDataUploader.cancelPeriodicUpload(context)
+                context.toast("Child Log out successfully")
             }
         )
     }

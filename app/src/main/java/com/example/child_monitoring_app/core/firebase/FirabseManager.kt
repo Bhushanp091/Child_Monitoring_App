@@ -258,78 +258,89 @@ class FirebaseAuthManager() {
             }
     }
 
-    fun uploadAppUsageToFirebase(context: Context, username: String) {
-
-        var selectedInterval = mutableStateOf(UsageStatsManager.INTERVAL_MONTHLY)
+    fun uploadAppUsageToFirebase(context: Context, username: String, intervalType: String) {
         val calendar = Calendar.getInstance()
         val endTime = calendar.timeInMillis
-        calendar.add(selectedInterval.value, -1) // -1 Day, -1 Week, or -1 Month
-        val startTime = calendar.timeInMillis
+
+        val startTime = when (intervalType) {
+            "daily" -> {
+                calendar.add(Calendar.DAY_OF_MONTH, -1)
+                calendar.timeInMillis
+            }
+            "weekly" -> {
+                calendar.add(Calendar.WEEK_OF_YEAR, -1)
+                calendar.timeInMillis
+            }
+            else -> {
+                calendar.add(Calendar.MONTH, -1)
+                calendar.timeInMillis
+            }
+        }
 
         val appUsageData = getAppUsageStats(context, startTime, endTime)
+        val usageDataList = appUsageData.map { log ->
+            hashMapOf(
+                "packageName" to log.packageName,
+                "appName" to log.appName,
+                "usageTime" to log.usageTime,
+                "icon" to log.icon,
+                "lastTimeUsed" to log.lastTimeUsed
+            )
+        }
 
         firestore.collection("parents")
             .get()
             .addOnSuccessListener { parentSnapshot ->
                 for (parentDoc in parentSnapshot.documents) {
-                    val parentId = parentDoc.id  // Get the parent document ID
+                    val parentId = parentDoc.id
 
-                    // Step 2: Find the child document inside this parent's "children" collection
                     firestore.collection("parents").document(parentId)
                         .collection("children")
-                        .whereEqualTo("username", username) // Find child by username
+                        .whereEqualTo("username", username)
                         .get()
                         .addOnSuccessListener { childSnapshot ->
                             if (!childSnapshot.isEmpty) {
-                                val childDoc = childSnapshot.documents[0]
-                                val childId = childDoc.id  // Get the child document ID
+                                val childId = childSnapshot.documents[0].id
 
-                                // Step 3: Prepare call logs data
-                                val callLogsList = appUsageData.map { log ->
-                                    hashMapOf(
-                                        "packageName" to log.packageName,
-                                        "appName" to log.appName,
-                                        "usageTime" to log.usageTime,
-                                        "icon" to log.icon,
-                                        "lastTimeUsed" to log.lastTimeUsed
-                                    )
+                                val usageField = when (intervalType) {
+                                    "daily" -> "data.appUsageDaily"
+                                    "weekly" -> "data.appUsageWeekly"
+                                    else -> "data.appUsage"
                                 }
 
-                                // Step 4: Update Firestore at the correct path
                                 firestore.collection("parents").document(parentId)
                                     .collection("children").document(childId)
-                                    .update("data.appUsage", callLogsList)
+                                    .update(usageField, usageDataList)
                                     .addOnSuccessListener {
-                                        Log.d("Firebase", "AppUsage updated successfully")
+                                        Log.d("Firebase", "AppUsage ($intervalType) updated successfully")
                                     }
                                     .addOnFailureListener {
                                         Log.e("Firebase", "Error updating AppUsage: ${it.message}")
                                     }
-                            } else {
-                                Log.e("Firebase", "No child document found for username: $username")
                             }
                         }
-                        .addOnFailureListener {
-                            Log.e("Firebase", "Error fetching child document: ${it.message}")
-                        }
                 }
-            }
-            .addOnFailureListener {
-                Log.e("Firebase", "Error fetching parent document: ${it.message}")
             }
     }
 
     fun fetchAppUsageFromFirebase(
         parentId: String,
         childId: String,
+        intervalType: String = "monthly", // options: daily, weekly, monthly
         onResult: (List<AppUsageInfo>) -> Unit
     ) {
+        val usageField = when (intervalType) {
+            "daily" -> "data.appUsageDaily"
+            "weekly" -> "data.appUsageWeekly"
+            else -> "data.appUsage"
+        }
+
         firestore.collection("parents").document(parentId)
             .collection("children").document(childId)
             .get()
             .addOnSuccessListener { document ->
                 if (document.exists()) {
-                    val appUsageList = document.get("data.appUsage") as? List<HashMap<String, Any>>
+                    val appUsageList = document.get(usageField) as? List<HashMap<String, Any>>
                     val appUsageData = appUsageList?.map { log ->
                         AppUsageInfo(
                             packageName = log["packageName"] as? String ?: "",
@@ -346,8 +357,12 @@ class FirebaseAuthManager() {
                     onResult(emptyList())
                 }
             }
-            .addOnFailureListener { Log.e("Firebase", "Error fetching appUsage: ${it.message}") }
+            .addOnFailureListener {
+                Log.e("Firebase", "Error fetching app usage ($intervalType): ${it.message}")
+                onResult(emptyList())
+            }
     }
+
 
     suspend fun uploadContactsToFirebase(context: Context, username: String) {
         val callLogs = getContacts(context)
