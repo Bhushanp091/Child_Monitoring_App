@@ -6,8 +6,11 @@ import androidx.compose.ui.Modifier
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.BitmapFactory
+import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import android.provider.Settings
+import android.util.Base64
 import androidx.compose.foundation.Image
 import java.util.Calendar
 import androidx.compose.foundation.background
@@ -19,9 +22,15 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
 import com.example.child_monitoring_app.R
 import com.example.child_monitoring_app.core.util.CommonUtil.formatMillisToTime
 import com.example.child_monitoring_app.core.preference.SharedPreference
@@ -96,9 +105,10 @@ fun AppUsageScreen(
 
 @Composable
 fun AppUsageItem(appUsageInfo: AppUsageInfo) {
-
     val context = LocalContext.current
-    val formattedTime = formatMillisToTime(appUsageInfo.usageTime.toLong())
+
+    // No need to convert, we already have the formatted time
+    val formattedTime = appUsageInfo.usageTime
 
     val appIcon: Drawable? = remember {
         try {
@@ -108,52 +118,99 @@ fun AppUsageItem(appUsageInfo: AppUsageInfo) {
         }
     }
 
-
-    Row(
+    Card(
         modifier = Modifier
-            .background(color = Color.White)
-            .padding(vertical = 10.sdp)
-            .padding(start = 8.sdp, end = 8.sdp)
-            .fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically
+            .fillMaxWidth()
+            .padding(vertical = 4.sdp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.sdp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color.White
+        )
     ) {
+        Row(
+            modifier = Modifier
+                .padding(12.sdp)
+                .fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // App Icon
+            if (appIcon != null) {
+                Image(
+                    painter = rememberDrawablePainter(drawable = appIcon),
+                    contentDescription = "${appUsageInfo.appName} Icon",
+                    modifier = Modifier
+                        .size(40.sdp)
+                        .clip(CircleShape)
+                )
+            } else {
+                Box(
+                    modifier = Modifier
+                        .size(40.sdp)
+                        .background(color = MaterialTheme.colorScheme.primary, shape = CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = appUsageInfo.appName.firstOrNull()?.toString() ?: "?",
+                        color = Color.White,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
 
-        if (appIcon != null) {
-            Image(
-                painter = rememberDrawablePainter(drawable = appIcon),
-                contentDescription = "${appUsageInfo.appName} Icon",
-                modifier = Modifier
-                    .size(38.sdp)
-                    .clip(CircleShape)
-            )
-        } else {
-            Image(
-                painter = painterResource(R.drawable.ic_launcher_foreground),
-                contentDescription = "${appUsageInfo.appName} Icon",
-                modifier = Modifier
-                    .background(color = MaterialTheme.colorScheme.primary, shape = CircleShape)
-                    .size(38.sdp)
-                    .clip(CircleShape)
-            )
-        }
+            Spacer(modifier = Modifier.width(16.sdp))
 
-        Spacer(modifier = Modifier.width(12.sdp)) // Space between icon and text
+            // App Info
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
+                SubHeadingText.SemiBold(
+                    title = appUsageInfo.appName
+                )
 
-        // Column for App Name and Usage Time
-        Column {
-            SubHeadingText.SemiBold(
-                title = appUsageInfo.appName
-            )
-            RegularText.Medium(
-                title = "Usage Time: $formattedTime",
-            )
+                Spacer(modifier = Modifier.height(4.sdp))
+
+                RegularText.Medium(
+                    title = "Usage Time: $formattedTime"
+                )
+
+                // Show last used time if available
+                if (appUsageInfo.lastTimeUsed.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(2.sdp))
+                    Text(
+                        text = "Last used: ${appUsageInfo.lastTimeUsed}",
+                        fontSize = 12.sp,
+                        color = Color.Gray
+                    )
+                }
+            }
         }
     }
-    HorizontalDivider(
-        thickness = 1.sdp,
-        color = Color.LightGray,
-        modifier = Modifier.fillMaxWidth()
-    )
+}
+// Helper function to remember drawable as a painter
+@Composable
+fun rememberDrawablePainter(drawable: Drawable): Painter {
+    return remember(drawable) {
+        DrawablePainter(drawable)
+    }
+}
+
+// Custom painter for drawables
+class DrawablePainter(private val drawable: Drawable) : Painter() {
+    override val intrinsicSize: androidx.compose.ui.geometry.Size
+        get() = Size(drawable.intrinsicWidth.toFloat(), drawable.intrinsicHeight.toFloat())
+
+    override fun DrawScope.onDraw() {
+        drawable.setBounds(0, 0, size.width.toInt(), size.height.toInt())
+
+        // Save the current canvas state
+        drawContext.canvas.save()
+
+        drawable.draw(drawContext.canvas.nativeCanvas)
+
+        // Restore the canvas state
+        drawContext.canvas.restore()
+    }
 }
 
 @Composable

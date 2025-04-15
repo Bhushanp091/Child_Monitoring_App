@@ -362,7 +362,7 @@ fun AppUsageItem(appUsage: AppUsageInfo) {
             horizontalAlignment = Alignment.End
         ) {
             RegularText.Medium(
-                title = formatMillisToTime(appUsage.usageTime.toLong()),
+                title = appUsage.usageTime,
                 textColor = Color(0xFF2A3252)
             )
 

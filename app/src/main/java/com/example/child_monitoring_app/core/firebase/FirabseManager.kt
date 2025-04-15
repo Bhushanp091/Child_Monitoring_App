@@ -20,6 +20,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.tasks.await
 import java.util.Calendar
+import java.util.Date
 
 
 class FirebaseAuthManager() {
@@ -258,24 +259,45 @@ class FirebaseAuthManager() {
             }
     }
 
+
+
     fun uploadAppUsageToFirebase(context: Context, username: String, intervalType: String) {
         val calendar = Calendar.getInstance()
-        val endTime = calendar.timeInMillis
+        val endTime = System.currentTimeMillis()
 
+        // Set appropriate start time based on interval type
         val startTime = when (intervalType) {
             "daily" -> {
-                calendar.add(Calendar.DAY_OF_MONTH, -1)
+                calendar.timeInMillis = endTime
+                calendar.set(Calendar.HOUR_OF_DAY, 0)
+                calendar.set(Calendar.MINUTE, 0)
+                calendar.set(Calendar.SECOND, 0)
+                calendar.set(Calendar.MILLISECOND, 0)
                 calendar.timeInMillis
             }
             "weekly" -> {
-                calendar.add(Calendar.WEEK_OF_YEAR, -1)
+                calendar.timeInMillis = endTime
+                // Roll back to the beginning of the week (assuming Sunday is first day)
+                val dayOfWeek = calendar.get(Calendar.DAY_OF_WEEK) - Calendar.SUNDAY
+                calendar.add(Calendar.DAY_OF_MONTH, -dayOfWeek)
+                calendar.set(Calendar.HOUR_OF_DAY, 0)
+                calendar.set(Calendar.MINUTE, 0)
+                calendar.set(Calendar.SECOND, 0)
+                calendar.set(Calendar.MILLISECOND, 0)
                 calendar.timeInMillis
             }
-            else -> {
-                calendar.add(Calendar.MONTH, -1)
+            else -> { // monthly
+                calendar.timeInMillis = endTime
+                calendar.set(Calendar.DAY_OF_MONTH, 1)
+                calendar.set(Calendar.HOUR_OF_DAY, 0)
+                calendar.set(Calendar.MINUTE, 0)
+                calendar.set(Calendar.SECOND, 0)
+                calendar.set(Calendar.MILLISECOND, 0)
                 calendar.timeInMillis
             }
         }
+
+        Log.d("AppUsage", "Fetching $intervalType stats from ${Date(startTime)} to ${Date(endTime)}")
 
         val appUsageData = getAppUsageStats(context, startTime, endTime)
         val usageDataList = appUsageData.map { log ->
@@ -283,11 +305,15 @@ class FirebaseAuthManager() {
                 "packageName" to log.packageName,
                 "appName" to log.appName,
                 "usageTime" to log.usageTime,
+                "usageTimeMillis" to log.usageTimeMillis,
                 "icon" to log.icon,
                 "lastTimeUsed" to log.lastTimeUsed
             )
         }
 
+        Log.d("AppUsage", "Uploading ${usageDataList.size} records for $intervalType")
+
+        // Firebase upload code remains the same
         firestore.collection("parents")
             .get()
             .addOnSuccessListener { parentSnapshot ->
@@ -305,14 +331,14 @@ class FirebaseAuthManager() {
                                 val usageField = when (intervalType) {
                                     "daily" -> "data.appUsageDaily"
                                     "weekly" -> "data.appUsageWeekly"
-                                    else -> "data.appUsage"
+                                    else -> "data.appUsage" // monthly
                                 }
 
                                 firestore.collection("parents").document(parentId)
                                     .collection("children").document(childId)
                                     .update(usageField, usageDataList)
                                     .addOnSuccessListener {
-                                        Log.d("Firebase", "AppUsage ($intervalType) updated successfully")
+                                        Log.d("Firebase", "AppUsage ($intervalType) updated successfully with ${usageDataList.size} apps")
                                     }
                                     .addOnFailureListener {
                                         Log.e("Firebase", "Error updating AppUsage: ${it.message}")
@@ -332,8 +358,10 @@ class FirebaseAuthManager() {
         val usageField = when (intervalType) {
             "daily" -> "data.appUsageDaily"
             "weekly" -> "data.appUsageWeekly"
-            else -> "data.appUsage"
+            else -> "data.appUsage" // monthly
         }
+
+        Log.d("Firebase", "Fetching $intervalType app usage for child $childId")
 
         firestore.collection("parents").document(parentId)
             .collection("children").document(childId)
@@ -341,17 +369,28 @@ class FirebaseAuthManager() {
             .addOnSuccessListener { document ->
                 if (document.exists()) {
                     val appUsageList = document.get(usageField) as? List<HashMap<String, Any>>
+
                     val appUsageData = appUsageList?.map { log ->
+                        val usageTime = log["usageTime"] as? String ?: "00:00:00"
+                        val usageTimeMillis = log["usageTimeMillis"] as? String ?: "0"
+
                         AppUsageInfo(
                             packageName = log["packageName"] as? String ?: "",
-                            usageTime = log["usageTime"] as? String ?: "",
+                            appName = log["appName"] as? String ?: "",
+                            usageTime = usageTime,
+                            usageTimeMillis = usageTimeMillis,
                             icon = log["icon"] as? String ?: "",
-                            lastTimeUsed = log["lastTimeUsed"] as? String ?: "",
-                            appName = log["appName"] as? String ?: ""
+                            lastTimeUsed = log["lastTimeUsed"] as? String ?: ""
                         )
                     } ?: emptyList()
 
-                    onResult(appUsageData)
+                    // Sort by actual usage time
+                    val sortedData = appUsageData.sortedByDescending {
+                        it.usageTimeMillis.toLongOrNull() ?: 0
+                    }
+
+                    Log.d("Firebase", "Retrieved ${sortedData.size} app usage records for $intervalType")
+                    onResult(sortedData)
                 } else {
                     Log.e("Firebase", "Child document not found")
                     onResult(emptyList())
@@ -556,7 +595,6 @@ class FirebaseAuthManager() {
                                     hashMapOf(
                                         "packageName" to log.packageName,
                                         "appName" to log.appName,
-                                        "isBlocked" to log.isBlocked
                                     )
                                 }
 
@@ -601,7 +639,6 @@ class FirebaseAuthManager() {
                         AppUsageInfo(
                             packageName = log["packageName"] as? String ?: "",
                             appName = log["appName"] as? String ?: "",
-                            isBlocked = log["isBlocked"] as? Boolean ?: false
                         )
                     } ?: emptyList()
                     onResult(appUsageData)

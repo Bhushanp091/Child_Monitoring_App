@@ -31,12 +31,11 @@ enum class CallType {
     MISSED, UNKNOWN, MADE, RECEIVED
 }
 
-
 data class AppUsageInfo(
     val packageName: String = "",
     val appName: String = "",
-    val usageTime: String = "",
-    val icon: String? = "",
-    val lastTimeUsed: String = "",
-    val isBlocked:Boolean = false
+    val usageTime: String = "", // formatted as HH:MM:SS for display
+    val usageTimeMillis: String = "0", // raw milliseconds for sorting
+    val lastTimeUsed: String = "", // formatted as readable date
+    val icon: String = "" // Base64 encoded icon (optional)
 )

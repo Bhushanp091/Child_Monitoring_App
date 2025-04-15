@@ -20,11 +20,11 @@ fun BrowserHistoryScreen(modifier: Modifier = Modifier) {
     ) {
         val context = LocalContext.current
         CommonButton(
-            text = "Enable Accessibility Permission",
+            text = "Under Maintenance, Thank you",
             onClick = {
-                context.startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS).apply {
-                    flags = Intent.FLAG_ACTIVITY_NEW_TASK
-                })
+//                context.startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS).apply {
+//                    flags = Intent.FLAG_ACTIVITY_NEW_TASK
+//                })
             }
         )
     }
