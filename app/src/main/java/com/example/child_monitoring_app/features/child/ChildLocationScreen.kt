@@ -36,25 +36,15 @@ fun ChildLocationScreen(
     locationViewModel: LocationViewModel
 ) {
     val context = LocalContext.current
-
+    val fusedLocationClient = remember { LocationServices.getFusedLocationProviderClient(context) }
     val childId = SharedPreference.getChildId(context) ?: ""
 
-
-    // Initialize location client
-    val fusedLocationClient = remember {
-        LocationServices.getFusedLocationProviderClient(context)
-    }
-
-    // State to hold current location
-
-    // Location request settings
     val locationRequest = remember {
-        LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 30 * 60 * 1000L) // 30 minutes
-            .setMinUpdateIntervalMillis(10 * 60 * 1000L) // Minimum 10 minutes
+        LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 5 * 60 * 1000L) // every 5 minutes
+            .setMinUpdateIntervalMillis(2 * 60 * 1000L) // at least every 2 min if possible
             .build()
     }
 
-    // Permission handling
     val locationPermissions = rememberMultiplePermissionsState(
         listOf(
             android.Manifest.permission.ACCESS_FINE_LOCATION,
@@ -64,50 +54,44 @@ fun ChildLocationScreen(
 
     val hasLocationPermissions = locationPermissions.allPermissionsGranted
 
-    // Location callback
+    // 🔁 Location Callback to receive location updates
     val locationCallback = remember {
         object : LocationCallback() {
             override fun onLocationResult(locationResult: LocationResult) {
-                locationResult.lastLocation?.let { location ->
-                    val newLatLng = LatLng(location.latitude, location.longitude)
-                    if (locationViewModel.currentLocation.value != newLatLng) {
-                        locationViewModel.currentLocation.value = newLatLng
-
-                        locationViewModel.firebaseManager.uploadChildLocationToFirebase(
-                            childId = childId,
-                            location = newLatLng
-                        )
+                locationResult.locations.forEach { location ->
+                    if (location.latitude != 0.0 && location.longitude != 0.0) {
+                        val newLatLng = LatLng(location.latitude, location.longitude)
+                        if (locationViewModel.currentLocation.value != newLatLng) {
+                            locationViewModel.currentLocation.value = newLatLng
+                            locationViewModel.firebaseManager.uploadChildLocationToFirebase(
+                                childId = childId,
+                                location = newLatLng
+                            )
+                        }
                     }
                 }
             }
-
         }
     }
 
-    // Request permissions if needed
-    LaunchedEffect(key1 = Unit) {
+    // 🔐 Request permissions when screen starts
+    LaunchedEffect(Unit) {
         if (!hasLocationPermissions) {
             locationPermissions.launchMultiplePermissionRequest()
         }
     }
 
-    // Start location updates
-    DisposableEffect(key1 = hasLocationPermissions) {
+    // 📍 Start location updates when permission is granted
+    DisposableEffect(hasLocationPermissions) {
         if (hasLocationPermissions) {
             try {
-                fusedLocationClient.lastLocation.addOnSuccessListener { location ->
-                    location?.let {
-                        locationViewModel.currentLocation.value = LatLng(it.latitude, it.longitude)
-                    }
-                }
-
                 fusedLocationClient.requestLocationUpdates(
                     locationRequest,
                     locationCallback,
                     Looper.getMainLooper()
                 )
             } catch (e: SecurityException) {
-                // Handle exception
+                e.printStackTrace()
             }
         }
 
@@ -116,14 +100,14 @@ fun ChildLocationScreen(
         }
     }
 
-    // Show the map or loading
+    // 🗺️ Show the Map UI
     Box(modifier = Modifier.fillMaxSize()) {
         locationViewModel.currentLocation.value?.let { location ->
             val cameraPositionState = rememberCameraPositionState {
                 position = CameraPosition.fromLatLngZoom(location, 15f)
             }
 
-            LaunchedEffect(key1 = location) {
+            LaunchedEffect(location) {
                 cameraPositionState.animate(
                     CameraUpdateFactory.newLatLngZoom(location, 15f)
                 )
@@ -135,24 +119,14 @@ fun ChildLocationScreen(
                 properties = MapProperties(isMyLocationEnabled = hasLocationPermissions)
             ) {
                 Marker(
-//                    position = location,
-                    title = "Current Location"
+                    title = "Child Location"
                 )
             }
         } ?: run {
-            if (hasLocationPermissions) {
-                Text(
-                    text = "Getting your location...",
-                    modifier = Modifier.align(Alignment.Center)
-                )
-            } else {
-                Text(
-                    text = "Location permission is required",
-                    modifier = Modifier
-                        .align(Alignment.Center)
-                        .padding(16.dp)
-                )
-            }
+            Text(
+                text = if (hasLocationPermissions) "Getting your location..." else "Location permission is required",
+                modifier = Modifier.align(Alignment.Center).padding(16.dp)
+            )
         }
     }
 }

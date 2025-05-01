@@ -45,7 +45,7 @@ fun ChildDashBoardScreen(
         val context = LocalContext.current
         val childId  = SharedPreference.getChildId(context)?:""
         val parentId  = SharedPreference.getParentId(context)?:""
-        val childLocation = authViewModel.currentLocation.value ?: LatLng(19.076090,72.877426)
+        val childLocation = authViewModel.currentLocation.value ?:  LatLng(19.047988, 72.913177)
         val networkStatusTracker = NetworkStatusTracker(context)
         val isConnected by networkStatusTracker.networkStatus.collectAsState()
         var batteryLevel by remember { mutableStateOf(getBatteryPercentage(context)) }

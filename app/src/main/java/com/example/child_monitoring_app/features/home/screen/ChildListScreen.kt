@@ -20,6 +20,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.KeyboardArrowRight
@@ -230,7 +231,7 @@ fun ChildListScreen(
                 )
             ) {
                 Icon(
-                    imageVector = Icons.Default.ThumbUp,
+                    imageVector = Icons.Default.Add,
                     contentDescription = "Add Child",
                     modifier = Modifier.size(20.dp)
                 )

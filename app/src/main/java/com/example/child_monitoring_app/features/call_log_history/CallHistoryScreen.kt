@@ -47,6 +47,7 @@ fun CallHistoryScreen(
     val parenId = SharedPreference.getParentId(context) ?: ""
 
     LaunchedEffect(Unit) {
+        callLogFlag.value = true
         appUsageViewModel.firebaseManager.fetchCallLogsFromFirebase(
             parenId,
             appUsageViewModel.childId.value

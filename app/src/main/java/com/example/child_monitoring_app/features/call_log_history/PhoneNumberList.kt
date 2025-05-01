@@ -52,9 +52,9 @@ fun PhoneNumberList(
     val parenId = SharedPreference.getParentId(context) ?: ""
 
     LaunchedEffect(Unit) {
+        callLogFlag.value = true
         appUsageViewModel.firebaseManager.fetchContactsFromFirebase(parenId,appUsageViewModel.childId.value) {
             if (callLogFlag.value) {
-                println("Fetch call Logs $it")
                 appUsageViewModel.contactList.value = it
                 callLogFlag.value = !callLogFlag.value
             }

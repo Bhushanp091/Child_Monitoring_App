@@ -3,6 +3,7 @@ package com.example.child_monitoring_app.service
 import android.accessibilityservice.AccessibilityService
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
 import com.example.child_monitoring_app.app.BlockOverlayActivity
@@ -46,5 +47,16 @@ class WebBlockService : AccessibilityService() {
     }
 
     override fun onInterrupt() {}
+
+    override fun onServiceConnected() {
+        super.onServiceConnected()
+        val intent = Intent(this, ForegroundKeeperService::class.java)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startForegroundService(intent)
+        } else {
+            startService(intent)
+        }
+    }
+
 }
 

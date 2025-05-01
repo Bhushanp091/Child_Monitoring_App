@@ -484,9 +484,9 @@ fun CallHistoryItem(callHistory: CallLogModel) {
                 title = callHistory.name,
                 textColor = Color(0xFF2A3252)
             )
-
+            val timeOnly = CommonUtil.convertTimestampToTimeOnly(callHistory.date.toLong())
             SmallText.Medium(
-                title = CommonUtil.convertTimestampToTimeOnly(callHistory.duration.toLong()),
+                title = timeOnly,
                 textColor = Color(0xFF9AA1B9)
             )
         }

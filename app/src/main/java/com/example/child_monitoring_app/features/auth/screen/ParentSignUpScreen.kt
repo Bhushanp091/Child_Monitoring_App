@@ -58,6 +58,9 @@ fun ParentSignupScreen(
         if (message.value == "Login successful") {
             onSignUp()
         }
+        if (message.value.isNotEmpty()) {
+            context.toast(message.value)
+        }
         clearData()
     }
 
@@ -213,6 +216,10 @@ fun ParentSignupScreen(
                 Button(
                     onClick = {
                         if (name.value.isNotEmpty() && email.value.isNotEmpty() && password.value.isNotEmpty() && confirmPassword.value.isNotEmpty()) {
+                            if (password.value != confirmPassword.value) {
+                                message.value = "Password does not match"
+                            return@Button
+                            }
                             coroutineScope.launch {
                                 isLoading.value = true
                                 val result = authViewModel.parentSignUp(email.value, password.value, name.value,context)
