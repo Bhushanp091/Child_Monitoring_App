@@ -86,15 +86,15 @@ fun HomeScreen(
     val callLogFlag = remember { mutableStateOf(true) }
 
     LaunchedEffect(selectedInterval.value) {
-        appUsageViewModel.firebaseManager.fetchAppUsageFromFirebase(
-            parenId,
-            appUsageViewModel.childId.value
-        ) {
-            if (flag.value) {
-                appUsageViewModel.usageData.value = it
-                flag.value = !flag.value
-            }
-        }
+//        appUsageViewModel.firebaseManager.fetchAppUsageFromFirebase(
+//            parenId,
+//            appUsageViewModel.childId.value
+//        ) {
+//            if (flag.value) {
+//                appUsageViewModel.usageData.value = it
+//                flag.value = !flag.value
+//            }
+//        }
     }
     LaunchedEffect(Unit) {
 

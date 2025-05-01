@@ -4,17 +4,42 @@ import android.app.usage.UsageStatsManager
 import androidx.compose.runtime.mutableStateOf
 import com.example.child_monitoring_app.core.ui.BaseViewModel
 import com.example.child_monitoring_app.features.call_log_history.Contact
+import java.util.Calendar
 
 
 class AppUsageViewModel : BaseViewModel() {
 
-    var usageData = mutableStateOf<List<AppUsageInfo>>(emptyList())
+//    var usageData = mutableStateOf<List<AppUsageInfo>>(emptyList())
     var blockedApp = mutableStateOf<List<AppUsageInfo>>(emptyList())
     var callLogsMain = mutableStateOf(emptyList<CallLogModel>())
     var contactList = mutableStateOf(emptyList<Contact>())
-    var selectedInterval = mutableStateOf(UsageStatsManager.INTERVAL_DAILY)
+//    var selectedInterval = mutableStateOf(UsageStatsManager.INTERVAL_DAILY)
     val flag = mutableStateOf(true)
     val callLogFlag =  mutableStateOf(true)
+
+
+
+    val selectedInterval = mutableStateOf(IntervalType.DAILY)
+    val usageData = mutableStateOf<List<AppUsageInfo>>(emptyList())
+
+    // Helper enum for clearer interval type handling
+    enum class IntervalType(val calendarField: Int, val apiName: String) {
+        DAILY(Calendar.DAY_OF_MONTH, "daily"),
+        WEEKLY(Calendar.WEEK_OF_YEAR, "weekly"),
+        MONTHLY(Calendar.MONTH, "monthly")
+    }
+
+    fun fetchAppUsageData(parentId: String) {
+        val intervalType = selectedInterval.value.apiName
+
+        firebaseManager.fetchAppUsageFromFirebase(
+            parentId = parentId,
+            childId = childId.value,
+            intervalType = intervalType
+        ) { usageList ->
+            usageData.value = usageList
+        }
+    }
 
 }
 

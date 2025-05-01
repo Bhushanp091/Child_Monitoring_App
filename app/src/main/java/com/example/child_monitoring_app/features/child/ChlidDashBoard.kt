@@ -26,9 +26,13 @@ import com.example.child_monitoring_app.features.auth.AuthViewModel
 import com.example.child_monitoring_app.features.home.screen.getBatteryPercentage
 import com.example.child_monitoring_app.features.network.NetworkStatusTracker
 import com.example.child_monitoring_app.workManager.BackgroundDataUploader
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.Priority
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.tasks.CancellationTokenSource
 import network.chaintech.sdpcomposemultiplatform.sdp
 
+@androidx.annotation.RequiresPermission(allOf = [android.Manifest.permission.ACCESS_FINE_LOCATION, android.Manifest.permission.ACCESS_COARSE_LOCATION])
 @Composable
 fun ChildDashBoardScreen(
     authViewModel: AuthViewModel,
@@ -51,9 +55,28 @@ fun ChildDashBoardScreen(
         var batteryLevel by remember { mutableStateOf(getBatteryPercentage(context)) }
 
 
-        LaunchedEffect (Unit){
+        LaunchedEffect (Unit)  {
             if(!areAllPermissionsGranted(context)) {
                 BackgroundDataUploader.schedulePeriodicUpload(context)
+                authViewModel.storeChildData(context, childLocation,childId,isConnected,batteryLevel)
+
+                val fusedClient = LocationServices.getFusedLocationProviderClient(context)
+                fusedClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, CancellationTokenSource().token)
+                    .addOnSuccessListener { location ->
+                        if (location != null) {
+                            val current = LatLng(location.latitude, location.longitude)
+                            println("Location $current")
+                            authViewModel.firebaseManager.uploadChildLocationToFirebase(childId,current)
+                        }
+                    }
+
+                authViewModel.firebaseManager.fetchBlockedAppFromFirebase(parentId,childId){ it ->
+                    saveBlockedApps(context,it.map { it.packageName })
+                }
+                authViewModel.firebaseManager.fetchBlockedWebFromFirebase(parentId,childId){ it ->
+                    saveBlockedWeb(context,it)
+                }
+
             }else{
                 context.toast("Permission not granted")
             }

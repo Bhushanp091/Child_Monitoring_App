@@ -19,8 +19,10 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.tasks.await
+import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
+import java.util.Locale
 
 
 class FirebaseAuthManager() {
@@ -261,92 +263,89 @@ class FirebaseAuthManager() {
 
 
 
+
+    // Fixed Firebase Methods for Proper Time Intervals
     fun uploadAppUsageToFirebase(context: Context, username: String, intervalType: String) {
         val calendar = Calendar.getInstance()
         val endTime = System.currentTimeMillis()
+        val startTime: Long
+        val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
 
-        // Set appropriate start time based on interval type
-        val startTime = when (intervalType) {
+        val path = when (intervalType) {
             "daily" -> {
-                calendar.timeInMillis = endTime
+                // Start of the current day (midnight)
                 calendar.set(Calendar.HOUR_OF_DAY, 0)
                 calendar.set(Calendar.MINUTE, 0)
                 calendar.set(Calendar.SECOND, 0)
                 calendar.set(Calendar.MILLISECOND, 0)
-                calendar.timeInMillis
+                startTime = calendar.timeInMillis
+                "appUsageDaily"
             }
             "weekly" -> {
-                calendar.timeInMillis = endTime
-                // Roll back to the beginning of the week (assuming Sunday is first day)
-                val dayOfWeek = calendar.get(Calendar.DAY_OF_WEEK) - Calendar.SUNDAY
-                calendar.add(Calendar.DAY_OF_MONTH, -dayOfWeek)
+                // Start of the current week (Sunday or Monday depending on locale)
+                calendar.set(Calendar.DAY_OF_WEEK, calendar.firstDayOfWeek)
                 calendar.set(Calendar.HOUR_OF_DAY, 0)
                 calendar.set(Calendar.MINUTE, 0)
                 calendar.set(Calendar.SECOND, 0)
                 calendar.set(Calendar.MILLISECOND, 0)
-                calendar.timeInMillis
+                startTime = calendar.timeInMillis
+                "appUsageWeekly"
             }
             else -> { // monthly
-                calendar.timeInMillis = endTime
+                // Start of the current month
                 calendar.set(Calendar.DAY_OF_MONTH, 1)
                 calendar.set(Calendar.HOUR_OF_DAY, 0)
                 calendar.set(Calendar.MINUTE, 0)
                 calendar.set(Calendar.SECOND, 0)
                 calendar.set(Calendar.MILLISECOND, 0)
-                calendar.timeInMillis
+                startTime = calendar.timeInMillis
+                "appUsageMonthly"
             }
         }
 
-        Log.d("AppUsage", "Fetching $intervalType stats from ${Date(startTime)} to ${Date(endTime)}")
+        // Log start and end times for debugging
+        Log.d("TimeInterval", "$intervalType: ${dateFormat.format(Date(startTime))} to ${dateFormat.format(Date(endTime))}")
 
         val appUsageData = getAppUsageStats(context, startTime, endTime)
-        val usageDataList = appUsageData.map { log ->
+        val dateKey = dateFormat.format(Date(startTime))
+
+        val usageMap = appUsageData.associateBy { it.packageName }.mapValues { (_, log) ->
             hashMapOf(
                 "packageName" to log.packageName,
                 "appName" to log.appName,
                 "usageTime" to log.usageTime,
                 "usageTimeMillis" to log.usageTimeMillis,
                 "icon" to log.icon,
-                "lastTimeUsed" to log.lastTimeUsed
+                "lastTimeUsed" to log.lastTimeUsed,
+                "startDate" to startTime,  // Store the time range for reference
+                "endDate" to endTime
             )
         }
 
-        Log.d("AppUsage", "Uploading ${usageDataList.size} records for $intervalType")
+        // Upload data to Firebase
+        firestore.collection("parents").get().addOnSuccessListener { parentSnapshot ->
+            parentSnapshot.forEach { parentDoc ->
+                firestore.collection("parents").document(parentDoc.id)
+                    .collection("children")
+                    .whereEqualTo("username", username)
+                    .get()
+                    .addOnSuccessListener { childSnapshot ->
+                        if (!childSnapshot.isEmpty) {
+                            val childId = childSnapshot.documents[0].id
+                            val docRef = firestore.collection("parents").document(parentDoc.id)
+                                .collection("children").document(childId)
 
-        // Firebase upload code remains the same
-        firestore.collection("parents")
-            .get()
-            .addOnSuccessListener { parentSnapshot ->
-                for (parentDoc in parentSnapshot.documents) {
-                    val parentId = parentDoc.id
-
-                    firestore.collection("parents").document(parentId)
-                        .collection("children")
-                        .whereEqualTo("username", username)
-                        .get()
-                        .addOnSuccessListener { childSnapshot ->
-                            if (!childSnapshot.isEmpty) {
-                                val childId = childSnapshot.documents[0].id
-
-                                val usageField = when (intervalType) {
-                                    "daily" -> "data.appUsageDaily"
-                                    "weekly" -> "data.appUsageWeekly"
-                                    else -> "data.appUsage" // monthly
+                            docRef.update("data.$path.$dateKey", usageMap.values.toList())
+                                .addOnSuccessListener {
+                                    Log.d("Firebase", "$intervalType usage for $dateKey uploaded successfully")
                                 }
-
-                                firestore.collection("parents").document(parentId)
-                                    .collection("children").document(childId)
-                                    .update(usageField, usageDataList)
-                                    .addOnSuccessListener {
-                                        Log.d("Firebase", "AppUsage ($intervalType) updated successfully with ${usageDataList.size} apps")
-                                    }
-                                    .addOnFailureListener {
-                                        Log.e("Firebase", "Error updating AppUsage: ${it.message}")
-                                    }
-                            }
+                                .addOnFailureListener { e ->
+                                    Log.e("Firebase", "Error uploading $intervalType usage: ${e.message}")
+                                }
                         }
-                }
+                    }
             }
+        }
     }
 
     fun fetchAppUsageFromFirebase(
@@ -401,6 +400,8 @@ class FirebaseAuthManager() {
                 onResult(emptyList())
             }
     }
+
+
 
 
     suspend fun uploadContactsToFirebase(context: Context, username: String) {
@@ -498,7 +499,7 @@ class FirebaseAuthManager() {
             }
     }
 
-    fun uploadChildLocationToFirebase(childId: String, location: LatLng) {
+    fun uploadChildLocationToFirebase(childId: String, location: LatLng?) {
         firestore.collection("parents")
             .get()
             .addOnSuccessListener { parentSnapshot ->
@@ -513,8 +514,8 @@ class FirebaseAuthManager() {
                                 val childDoc = childSnapshot.documents[0]
                                 val child = childDoc.id
                                 val locationData = hashMapOf(
-                                    "latitude" to location.latitude,
-                                    "longitude" to location.longitude,
+                                    "latitude" to location?.latitude,
+                                    "longitude" to location?.longitude,
                                     "timestamp" to System.currentTimeMillis()
                                 )
                                 firestore.collection("parents").document(parentId)

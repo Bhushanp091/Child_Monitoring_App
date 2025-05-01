@@ -1,44 +1,43 @@
 package com.example.child_monitoring_app.features.app_usage
 
-import android.app.AppOpsManager
+import android.content.pm.PackageManager
+import android.graphics.drawable.Drawable
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import android.content.Context
-import android.content.Intent
-import android.content.pm.PackageManager
-import android.graphics.BitmapFactory
-import android.graphics.drawable.BitmapDrawable
-import android.graphics.drawable.Drawable
-import android.provider.Settings
-import android.util.Base64
-import androidx.compose.foundation.Image
 import java.util.Calendar
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccessTime
+import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.drawscope.DrawScope
-import androidx.compose.ui.graphics.nativeCanvas
-import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.child_monitoring_app.R
-import com.example.child_monitoring_app.core.util.CommonUtil.formatMillisToTime
 import com.example.child_monitoring_app.core.preference.SharedPreference
 import com.example.child_monitoring_app.core.style_guide.Text.RegularText
 import com.example.child_monitoring_app.core.style_guide.Text.SubHeadingText
+import com.example.child_monitoring_app.features.home.screen.AppUsageItem
 import com.google.accompanist.drawablepainter.rememberDrawablePainter
+import kotlinx.coroutines.delay
 import network.chaintech.sdpcomposemultiplatform.sdp
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+import java.util.concurrent.TimeUnit
 
+// Updated UI Component
 @Composable
 fun AppUsageScreen(
     appUsageViewModel: AppUsageViewModel,
@@ -47,20 +46,21 @@ fun AppUsageScreen(
 
     val context = LocalContext.current
     val parentId = SharedPreference.getParentId(context) ?: ""
+    val isLoading = remember { mutableStateOf(false) }
 
     LaunchedEffect(selectedInterval.value) {
-        val interval = when (selectedInterval.value) {
-            Calendar.DAY_OF_MONTH -> "daily"
-            Calendar.WEEK_OF_YEAR -> "weekly"
-            else -> "monthly"
-        }
+        isLoading.value = true
+
+        // Simple delay to ensure loading indicator shows
+        delay(200)
 
         firebaseManager.fetchAppUsageFromFirebase(
-            parentId,
-            childId.value,
-            intervalType = interval
+            parentId = parentId,
+            childId = childId.value,
+            intervalType = selectedInterval.value.apiName
         ) { usageList ->
             usageData.value = usageList
+            isLoading.value = false
         }
     }
 
@@ -69,34 +69,185 @@ fun AppUsageScreen(
         verticalArrangement = Arrangement.Top,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-
+        // Improved UI with active interval indicator
         LazyColumn(modifier = Modifier.fillMaxSize()) {
             item {
-                Spacer(modifier = Modifier.height(16.sdp))
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Current interval title
+                Text(
+                    text = "${selectedInterval.value.name.lowercase().capitalize()} App Usage",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                )
+
+                // Time range divider
+                HorizontalDivider(
+                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
+                    thickness = 1.dp,
+                    modifier = Modifier
+                        .padding(horizontal = 16.dp)
+                        .fillMaxWidth()
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Interval selector buttons
                 Row(
                     horizontalArrangement = Arrangement.Center,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp)
                 ) {
-                    IntervalButton("Daily", Calendar.DAY_OF_MONTH, selectedInterval)
-                    Spacer(modifier = Modifier.width(8.sdp))
-                    IntervalButton("Weekly", Calendar.WEEK_OF_YEAR, selectedInterval)
-                    Spacer(modifier = Modifier.width(8.sdp))
-                    IntervalButton("Monthly", Calendar.MONTH, selectedInterval)
-                }
-                Spacer(modifier = Modifier.height(16.sdp))
-            }
-
-            if (usageData.value.isEmpty()) {
-                item {
-                    Text(
-                        "No usage data available",
-                        modifier = Modifier.padding(16.sdp),
-                        style = MaterialTheme.typography.bodyMedium
+                    IntervalButton(
+                        label = "Daily",
+                        interval = AppUsageViewModel.IntervalType.DAILY,
+                        selectedInterval = selectedInterval
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    IntervalButton(
+                        label = "Weekly",
+                        interval = AppUsageViewModel.IntervalType.WEEKLY,
+                        selectedInterval = selectedInterval
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    IntervalButton(
+                        label = "Monthly",
+                        interval = AppUsageViewModel.IntervalType.MONTHLY,
+                        selectedInterval = selectedInterval
                     )
                 }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Time range display
+                val timeRangeText = when (selectedInterval.value) {
+                    AppUsageViewModel.IntervalType.DAILY -> {
+                        val dateFormat = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
+                        "Today (${dateFormat.format(Date())})"
+                    }
+                    AppUsageViewModel.IntervalType.WEEKLY -> {
+                        val calendar = Calendar.getInstance()
+                        val dateFormat = SimpleDateFormat("MMM dd", Locale.getDefault())
+
+                        // Get start of week
+                        val tempCalendar = Calendar.getInstance()
+                        tempCalendar.set(Calendar.DAY_OF_WEEK, calendar.firstDayOfWeek)
+                        val startDate = dateFormat.format(tempCalendar.time)
+
+                        // Get end of week
+                        tempCalendar.add(Calendar.DAY_OF_WEEK, 6)
+                        val endDate = dateFormat.format(tempCalendar.time)
+
+                        "This Week ($startDate - $endDate)"
+                    }
+                    AppUsageViewModel.IntervalType.MONTHLY -> {
+                        val monthFormat = SimpleDateFormat("MMMM yyyy", Locale.getDefault())
+                        "This Month (${monthFormat.format(Date())})"
+                    }
+                }
+
+                Text(
+                    text = timeRangeText,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color.Gray,
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+
+            if (isLoading.value) {
+                item {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(200.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator()
+                    }
+                }
+            } else if (usageData.value.isEmpty()) {
+                item {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(200.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.Info,
+                                contentDescription = null,
+                                tint = Color.Gray,
+                                modifier = Modifier.size(48.dp)
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                "No app usage data available for this time period",
+                                textAlign = TextAlign.Center,
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = Color.Gray
+                            )
+                        }
+                    }
+                }
             } else {
+                // Display total usage time
+                item {
+                    val totalMillis = usageData.value.sumOf {
+                        it.usageTimeMillis.toLongOrNull() ?: 0L
+                    }
+
+                    val hours = TimeUnit.MILLISECONDS.toHours(totalMillis)
+                    val minutes = TimeUnit.MILLISECONDS.toMinutes(totalMillis) % 60
+
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 8.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.7f)
+                        )
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.AccessTime,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Column {
+                                Text(
+                                    text = "Total Usage Time",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                                )
+                                Text(
+                                    text = "$hours hr $minutes min",
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
+
+                // App usage items
                 items(usageData.value) { appUsageInfo ->
-                    AppUsageItem(appUsageInfo)
+                    AppUsageItem2(appUsageInfo)
                 }
             }
         }
@@ -104,7 +255,38 @@ fun AppUsageScreen(
 }
 
 @Composable
-fun AppUsageItem(appUsageInfo: AppUsageInfo) {
+fun IntervalButton(
+    label: String,
+    interval: AppUsageViewModel.IntervalType,
+    selectedInterval: MutableState<AppUsageViewModel.IntervalType>
+) {
+    val isSelected = selectedInterval.value == interval
+
+    Button(
+        onClick = { selectedInterval.value = interval },
+        colors = ButtonDefaults.buttonColors(
+            containerColor = if (isSelected)
+                MaterialTheme.colorScheme.primary
+            else
+                MaterialTheme.colorScheme.surfaceVariant,
+            contentColor = if (isSelected)
+                MaterialTheme.colorScheme.onPrimary
+            else
+                MaterialTheme.colorScheme.onSurfaceVariant
+        ),
+        shape = RoundedCornerShape(8.dp),
+//        modifier = Modifier.weight(1f)
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelLarge,
+            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+        )
+    }
+}
+
+@Composable
+private fun AppUsageItem2(appUsageInfo: AppUsageInfo) {
     val context = LocalContext.current
 
     // No need to convert, we already have the formatted time
@@ -187,49 +369,4 @@ fun AppUsageItem(appUsageInfo: AppUsageInfo) {
         }
     }
 }
-// Helper function to remember drawable as a painter
-@Composable
-fun rememberDrawablePainter(drawable: Drawable): Painter {
-    return remember(drawable) {
-        DrawablePainter(drawable)
-    }
-}
-
-// Custom painter for drawables
-class DrawablePainter(private val drawable: Drawable) : Painter() {
-    override val intrinsicSize: androidx.compose.ui.geometry.Size
-        get() = Size(drawable.intrinsicWidth.toFloat(), drawable.intrinsicHeight.toFloat())
-
-    override fun DrawScope.onDraw() {
-        drawable.setBounds(0, 0, size.width.toInt(), size.height.toInt())
-
-        // Save the current canvas state
-        drawContext.canvas.save()
-
-        drawable.draw(drawContext.canvas.nativeCanvas)
-
-        // Restore the canvas state
-        drawContext.canvas.restore()
-    }
-}
-
-@Composable
-fun IntervalButton(
-    label: String,
-    calendarConstant: Int,
-    selectedInterval: MutableState<Int>
-) {
-    val isSelected = selectedInterval.value == calendarConstant
-    Button(
-        onClick = { selectedInterval.value = calendarConstant },
-        colors = ButtonDefaults.buttonColors(
-            containerColor = if (isSelected) MaterialTheme.colorScheme.primary
-            else MaterialTheme.colorScheme.surfaceVariant
-        )
-    ) {
-        Text(label)
-    }
-}
-
-
 
