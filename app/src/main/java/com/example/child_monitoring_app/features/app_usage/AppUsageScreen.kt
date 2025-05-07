@@ -53,14 +53,15 @@ fun AppUsageScreen(
 
         // Simple delay to ensure loading indicator shows
         delay(200)
+        println("appUsage Fetch from firebase")
 
         firebaseManager.fetchAppUsageFromFirebase(
             parentId = parentId,
             childId = childId.value,
-            intervalType = selectedInterval.value.apiName
+            intervalType = selectedInterval.value.toString()
         ) { usageList ->
-            usageData.value = usageList
             isLoading.value = false
+            usageData.value = usageList
         }
     }
 
@@ -127,6 +128,7 @@ fun AppUsageScreen(
                         val dateFormat = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
                         "Today (${dateFormat.format(Date())})"
                     }
+
                     AppUsageViewModel.IntervalType.WEEKLY -> {
                         val calendar = Calendar.getInstance()
                         val dateFormat = SimpleDateFormat("MMM dd", Locale.getDefault())
@@ -142,6 +144,7 @@ fun AppUsageScreen(
 
                         "This Week ($startDate - $endDate)"
                     }
+
                     AppUsageViewModel.IntervalType.MONTHLY -> {
                         val monthFormat = SimpleDateFormat("MMMM yyyy", Locale.getDefault())
                         "This Month (${monthFormat.format(Date())})"

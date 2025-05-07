@@ -348,59 +348,120 @@ class FirebaseAuthManager() {
         }
     }
 
+
+
+    // COMPLETELY REVISED FETCH FUNCTION
     fun fetchAppUsageFromFirebase(
         parentId: String,
         childId: String,
-        intervalType: String = "monthly", // options: daily, weekly, monthly
+        intervalType: String,
         onResult: (List<AppUsageInfo>) -> Unit
     ) {
-        val usageField = when (intervalType) {
-            "daily" -> "data.appUsageDaily"
-            "weekly" -> "data.appUsageWeekly"
-            else -> "data.appUsage" // monthly
+        val normalizedIntervalType = intervalType.lowercase().trim()
+
+        // Path depends on interval type
+        val usagePath = when (normalizedIntervalType) {
+            "daily" -> "appUsageDaily"
+            "weekly" -> "appUsageWeekly"
+            "monthly" -> "appUsageMonthly"
+            else -> {
+                Log.e("Firebase", "Invalid interval type: $intervalType, defaulting to monthly")
+                "appUsageMonthly"
+            }
         }
 
-        Log.d("Firebase", "Fetching $intervalType app usage for child $childId")
+        Log.d("Firebase", "Fetching $normalizedIntervalType usage data from path: $usagePath")
 
         firestore.collection("parents").document(parentId)
             .collection("children").document(childId)
             .get()
             .addOnSuccessListener { document ->
-                if (document.exists()) {
-                    val appUsageList = document.get(usageField) as? List<HashMap<String, Any>>
-
-                    val appUsageData = appUsageList?.map { log ->
-                        val usageTime = log["usageTime"] as? String ?: "00:00:00"
-                        val usageTimeMillis = log["usageTimeMillis"] as? String ?: "0"
-
-                        AppUsageInfo(
-                            packageName = log["packageName"] as? String ?: "",
-                            appName = log["appName"] as? String ?: "",
-                            usageTime = usageTime,
-                            usageTimeMillis = usageTimeMillis,
-                            icon = log["icon"] as? String ?: "",
-                            lastTimeUsed = log["lastTimeUsed"] as? String ?: ""
-                        )
-                    } ?: emptyList()
-
-                    // Sort by actual usage time
-                    val sortedData = appUsageData.sortedByDescending {
-                        it.usageTimeMillis.toLongOrNull() ?: 0
-                    }
-
-                    Log.d("Firebase", "Retrieved ${sortedData.size} app usage records for $intervalType")
-                    onResult(sortedData)
-                } else {
+                if (!document.exists()) {
                     Log.e("Firebase", "Child document not found")
                     onResult(emptyList())
+                    return@addOnSuccessListener
                 }
+
+                val dataMap = document.get("data") as? Map<*, *>
+                if (dataMap == null) {
+                    Log.e("Firebase", "No data field found in document")
+                    onResult(emptyList())
+                    return@addOnSuccessListener
+                }
+
+                val specificUsageMap = dataMap[usagePath] as? Map<*, *>
+                if (specificUsageMap == null) {
+                    Log.e("Firebase", "No $usagePath data found in document")
+                    onResult(emptyList())
+                    return@addOnSuccessListener
+                }
+
+                // Log available keys
+                Log.d("Firebase", "Available date keys for $normalizedIntervalType: ${specificUsageMap.keys}")
+
+                // Parse dates and find the latest one
+                val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+                val latestDateKey = specificUsageMap.keys
+                    .mapNotNull { key ->
+                        try {
+                            val date = dateFormat.parse(key.toString())
+                            Pair(key.toString(), date?.time ?: 0L)
+                        } catch (e: Exception) {
+                            Log.e("Firebase", "Error parsing date: ${key}, error: ${e.message}")
+                            null
+                        }
+                    }
+                    .maxByOrNull { it.second }
+                    ?.first
+
+                if (latestDateKey == null) {
+                    Log.e("Firebase", "No valid date keys found for $normalizedIntervalType")
+                    onResult(emptyList())
+                    return@addOnSuccessListener
+                }
+
+                Log.d("Firebase", "Selected latest key for $normalizedIntervalType: $latestDateKey")
+
+                // Get the app usage data for the latest date
+                val usageListRaw = specificUsageMap[latestDateKey] as? List<*>
+                if (usageListRaw == null) {
+                    Log.e("Firebase", "No usage data found for date $latestDateKey")
+                    onResult(emptyList())
+                    return@addOnSuccessListener
+                }
+
+                // Convert to AppUsageInfo objects
+                val appUsageList = usageListRaw.mapNotNull { item ->
+                    val usageMap = item as? Map<*, *> ?: return@mapNotNull null
+
+                    try {
+                        AppUsageInfo(
+                            packageName = usageMap["packageName"] as? String ?: "",
+                            appName = usageMap["appName"] as? String ?: "",
+                            usageTime = usageMap["usageTime"] as? String ?: "",
+                            usageTimeMillis = usageMap["usageTimeMillis"] as? String ?: "0",
+                            icon = usageMap["icon"] as? String ?: "",
+                            lastTimeUsed = usageMap["lastTimeUsed"] as? String ?: ""
+                        )
+                    } catch (e: Exception) {
+                        Log.e("Firebase", "Error parsing usage item: ${e.message}")
+                        null
+                    }
+                }
+
+                // Sort by usage time (descending)
+                val sortedData = appUsageList.sortedByDescending {
+                    it.usageTimeMillis.toLongOrNull() ?: 0L
+                }
+
+                Log.d("Firebase", "Retrieved ${sortedData.size} usage logs for $normalizedIntervalType [$latestDateKey]")
+                onResult(sortedData)
             }
-            .addOnFailureListener {
-                Log.e("Firebase", "Error fetching app usage ($intervalType): ${it.message}")
+            .addOnFailureListener { e ->
+                Log.e("Firebase", "Error fetching usage data: ${e.message}")
                 onResult(emptyList())
             }
     }
-
 
 
 

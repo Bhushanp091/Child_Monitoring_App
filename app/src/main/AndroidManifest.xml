@@ -55,7 +55,7 @@
         </activity>
         <meta-data
             android:name="com.google.android.geo.API_KEY"
-            android:value="AIzaSyAJ0f6gCfjPfDnzoSNXqs-eth6LC36-9DM" />
+            android:value="Your map key" />
         <service
             android:name=".service.WebBlockService"
             android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
